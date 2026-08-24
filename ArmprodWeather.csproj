@@ -4,6 +4,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <RootNamespace>ArmprodWeather</RootNamespace>
+    <AssemblyName>Armprod Weather</AssemblyName>
+    <ApplicationIcon><!-- --></ApplicationIcon>
+
+    <!-- Informations about autors and company -->
+    <Authors>Armprod</Authors>
+    <Company>Armprod s.r.o.</Company>
+    <Product>Armprod Weather</Product>
+    <Description>Practical multi-platform Weather application</Description>
+    <Copyright>Copyright © 2026 Armprod s.r.o.</Copyright>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

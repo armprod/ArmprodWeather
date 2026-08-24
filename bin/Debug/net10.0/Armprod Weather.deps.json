@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "ArmprodWeather/1.0.0": {
+      "Armprod Weather/1.0.0": {
         "dependencies": {
           "Avalonia": "12.1.0",
           "Avalonia.Desktop": "12.1.0",
@@ -16,7 +16,7 @@
           "CommunityToolkit.Mvvm": "8.4.2"
         },
         "runtime": {
-          "ArmprodWeather.dll": {}
+          "Armprod Weather.dll": {}
         }
       },
       "Avalonia/12.1.0": {
@@ -539,7 +539,7 @@
     }
   },
   "libraries": {
-    "ArmprodWeather/1.0.0": {
+    "Armprod Weather/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

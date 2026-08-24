@@ -1,22 +1,132 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:ArmprodWeather.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:m="using:ArmprodWeather.Models"
         x:Class="ArmprodWeather.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="ArmprodWeather">
+        Title="Weather"
+        Width="400" Height="800"
+        Background="#1E1E1E"
+        Foreground="White">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
-    </Design.DataContext>
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- TOP BAR WITH SEARCHING -->
+        <StackPanel Grid.Row="0" Margin="20,15">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                    <TextBlock Text="{Binding CityName}" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock Text="📍" FontSize="16" VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <Button Command="{Binding RefreshCommand}" Background="Transparent" Content="🔄" FontSize="18"/>
+                    <Button Command="{Binding ToggleSearchCommand}" Background="Transparent" Content="🔍" FontSize="18"/>
+                    <Button Background="Transparent" Content="⚙️" FontSize="18"/>
+                </StackPanel>
+            </Grid>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+            <!-- SEARCH PANEL -->
+            <StackPanel IsVisible="{Binding IsSearchOpen}" Margin="0,10,0,0" Spacing="8">
+                <TextBox Text="{Binding SearchQuery, Mode=TwoWay}" 
+                         PlaceholderText="Enter the name of the town ..."
+                         CornerRadius="10"/>
+                
+                <ListBox ItemsSource="{Binding SearchResults}" 
+                         SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                         MaxHeight="200"
+                         Background="#2D2D30" 
+                         CornerRadius="10">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="m:LocationItem">
+                            <TextBlock Text="{Binding DisplayName}" Padding="8,4" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </StackPanel>
 
+        <!-- MAIN SCROLL CONTENT -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+            <StackPanel Margin="20,0,20,20" Spacing="20">
+                
+                <!-- HERO SECTOR -->
+                <StackPanel HorizontalAlignment="Center" Spacing="10" Margin="0,10,0,10">
+                    <Border Width="120" Height="120" 
+                            Background="#2B2930"
+                            CornerRadius="60" 
+                            HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding WeatherIcon}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <TextBlock Text="{Binding CurrentTemperature}" FontSize="72" FontWeight="Thin" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding WeatherCondition}" FontSize="20" Opacity="0.9" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TempRange}" FontSize="14" Opacity="0.6" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- HOURLY FORECAST -->
+                <Border Background="#2B2930" CornerRadius="20" Padding="15">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Hourly forecast" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                        
+                        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding HourlyForecast}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="20"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:HourlyItem">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding Time}" FontSize="12" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Temp}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <!-- WEEKLY FORECAST -->
+                <Border Background="#2B2930" CornerRadius="20" Padding="15">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="7-day forecast" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                        
+                        <ItemsControl ItemsSource="{Binding DailyForecast}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DailyItem">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
+                                        <TextBlock Text="{Binding Day}" FontSize="14"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Icon}" Margin="0,0,20,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding TempRange}" FontWeight="Bold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- DETAIL GRID -->
+                <UniformGrid Columns="2" Rows="2">
+                    <Border Background="#2B2930" CornerRadius="16" Padding="15" Margin="0,0,5,10">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="💨 Wind" FontSize="12" Opacity="0.7"/>
+                            <TextBlock Text="{Binding WindSpeed}" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#2B2930" CornerRadius="16" Padding="15" Margin="5,0,0,10">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="💧 Humidity" FontSize="12" Opacity="0.7"/>
+                            <TextBlock Text="{Binding Humidity}" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Window>
