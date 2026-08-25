@@ -11,6 +11,8 @@ public class UserSettings
     public double Longitude { get; set; } = 16.6077;
     public DateTime LastUpdated { get; set; } = DateTime.MinValue;
     public string? RawWeatherJson { get; set; }
+    public string Theme { get; set; } = "Dark";
+    public string Language { get; set; } = "English";
 }
 
 public class SettingsService

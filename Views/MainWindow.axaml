@@ -4,39 +4,96 @@
         xmlns:m="using:ArmprodWeather.Models"
         x:Class="ArmprodWeather.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="Weather"
+        Title="Armprod Weather"
         Width="400" Height="800"
-        Background="#1E1E1E"
-        Foreground="White">
+        Background="{DynamicResource AppBackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Dark Theme -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
+                </ResourceDictionary>
+                <!-- Light Theme -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F4F6"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1C1C1E"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#E5E5EA"/>
+                </ResourceDictionary>
+                <!-- Default Theme -->
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
 
     <Grid RowDefinitions="Auto,*">
         
-        <!-- TOP BAR WITH SEARCHING -->
-        <StackPanel Grid.Row="0" Margin="20,15">
+        <!-- TOP BAR WITH SEARCHING & SETTINGS -->
+        <StackPanel Grid.Row="0" Margin="20,15,20,5" Spacing="10" ZIndex="1">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-                    <TextBlock Text="{Binding CityName}" FontSize="22" FontWeight="Bold"/>
-                    <TextBlock Text="📍" FontSize="16" VerticalAlignment="Center"/>
-                </StackPanel>
+                <DockPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock Text="{Binding CityName}"
+                            FontSize="22" 
+                            FontWeight="Bold"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip.Tip="{Binding CityName}"/>
+                </DockPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                     <Button Command="{Binding RefreshCommand}" Background="Transparent" Content="🔄" FontSize="18"/>
                     <Button Command="{Binding ToggleSearchCommand}" Background="Transparent" Content="🔍" FontSize="18"/>
-                    <Button Background="Transparent" Content="⚙️" FontSize="18"/>
+                    <Button Command="{Binding ToggleSettingsCommand}" Background="Transparent" Content="⚙️" FontSize="18"/>
                 </StackPanel>
             </Grid>
 
+            <!-- SETTINGS PANEL -->
+            <Border IsVisible="{Binding IsSettingsOpen}"
+                    CornerRadius="12"
+                    Padding="16"
+                    Background="{DynamicResource CardBackgroundBrush}">
+
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{Binding SettingsTitle}" FontSize="16" FontWeight="Bold"/>
+
+                    <!-- App Theme -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBlock Text="{Binding ThemeLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableThemes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" Width="140"/>
+                    </Grid>
+
+                    <!-- App Language -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBlock Text="{Binding LanguageLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableLanguages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}" Width="140"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- SEARCH PANEL -->
-            <StackPanel IsVisible="{Binding IsSearchOpen}" Margin="0,10,0,0" Spacing="8">
-                <TextBox Text="{Binding SearchQuery, Mode=TwoWay}" 
-                         PlaceholderText="Enter the name of the town ..."
-                         CornerRadius="10"/>
-                
+            <StackPanel IsVisible="{Binding IsSearchOpen}" 
+                        Spacing="8"
+                        PropertyChanged="SearchPanel_PropertyChanged">
+                        <TextBox x:Name="SearchInput"
+                            Text="{Binding SearchQuery, Mode=TwoWay}" 
+                            PlaceholderText="{Binding SearchPlaceholder}"
+                            CornerRadius="10"/>
+                            
                 <ListBox ItemsSource="{Binding SearchResults}" 
-                         SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
-                         MaxHeight="200"
-                         Background="#2D2D30" 
-                         CornerRadius="10">
+                        SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                        MaxHeight="200"
+                        Background="{DynamicResource SearchBackgroundBrush}" 
+                        CornerRadius="10">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="m:LocationItem">
                             <TextBlock Text="{Binding DisplayName}" Padding="8,4" VerticalAlignment="Center"/>
@@ -44,6 +101,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
+
         </StackPanel>
 
         <!-- MAIN SCROLL CONTENT -->
@@ -53,7 +111,7 @@
                 <!-- HERO SECTOR -->
                 <StackPanel HorizontalAlignment="Center" Spacing="10" Margin="0,10,0,10">
                     <Border Width="120" Height="120" 
-                            Background="#2B2930"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="60" 
                             HorizontalAlignment="Center">
                         <TextBlock Text="{Binding WeatherIcon}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -65,9 +123,9 @@
                 </StackPanel>
 
                 <!-- HOURLY FORECAST -->
-                <Border Background="#2B2930" CornerRadius="20" Padding="15">
+                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="Hourly forecast" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                        <TextBlock Text="{Binding HourlyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
                         
                         <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                             <ItemsControl ItemsSource="{Binding HourlyForecast}">
@@ -91,9 +149,9 @@
                 </Border>
 
                 <!-- WEEKLY FORECAST -->
-                <Border Background="#2B2930" CornerRadius="20" Padding="15">
+                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="7-day forecast" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                        <TextBlock Text="{Binding DailyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
                         
                         <ItemsControl ItemsSource="{Binding DailyForecast}">
                             <ItemsControl.ItemTemplate>
@@ -111,16 +169,16 @@
 
                 <!-- DETAIL GRID -->
                 <UniformGrid Columns="2" Rows="2">
-                    <Border Background="#2B2930" CornerRadius="16" Padding="15" Margin="0,0,5,10">
+                    <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="15" Margin="0,0,5,10">
                         <StackPanel Spacing="5">
-                            <TextBlock Text="💨 Wind" FontSize="12" Opacity="0.7"/>
+                            <TextBlock Text="{Binding WindHeader}" FontSize="12" Opacity="0.7"/>
                             <TextBlock Text="{Binding WindSpeed}" FontSize="18" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="#2B2930" CornerRadius="16" Padding="15" Margin="5,0,0,10">
+                    <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="15" Margin="5,0,0,10">
                         <StackPanel Spacing="5">
-                            <TextBlock Text="💧 Humidity" FontSize="12" Opacity="0.7"/>
+                            <TextBlock Text="{Binding HumidityHeader}" FontSize="12" Opacity="0.7"/>
                             <TextBlock Text="{Binding Humidity}" FontSize="18" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
