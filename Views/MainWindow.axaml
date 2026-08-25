@@ -52,45 +52,45 @@
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                     <Button Command="{Binding RefreshCommand}" Background="Transparent" Content="🔄" FontSize="18"/>
-                    <Button Command="{Binding ToggleSearchCommand}" Background="Transparent" Content="🔍" FontSize="18"/>
-                    <Button Command="{Binding ToggleSettingsCommand}" Background="Transparent" Content="⚙️" FontSize="18"/>
+                    <Button Command="{Binding Search.ToggleSearchCommand}" Background="Transparent" Content="🔍" FontSize="18"/>
+                    <Button Command="{Binding Settings.ToggleSettingsCommand}" Background="Transparent" Content="⚙️" FontSize="18"/>
                 </StackPanel>
             </Grid>
 
             <!-- SETTINGS PANEL -->
-            <Border IsVisible="{Binding IsSettingsOpen}"
+            <Border IsVisible="{Binding Settings.IsSettingsOpen}"
                     CornerRadius="12"
                     Padding="16"
                     Background="{DynamicResource CardBackgroundBrush}">
 
                 <StackPanel Spacing="14">
-                    <TextBlock Text="{Binding SettingsTitle}" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Settings.SettingsTitle}" FontSize="16" FontWeight="Bold"/>
 
                     <!-- App Theme -->
                     <Grid ColumnDefinitions="*, Auto">
-                        <TextBlock Text="{Binding ThemeLabel}" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableThemes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" Width="140"/>
+                        <TextBlock Text="{Binding Settings.ThemeLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Settings.AvailableThemes}" SelectedItem="{Binding Settings.SelectedTheme, Mode=TwoWay}" Width="140"/>
                     </Grid>
 
                     <!-- App Language -->
                     <Grid ColumnDefinitions="*, Auto">
-                        <TextBlock Text="{Binding LanguageLabel}" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableLanguages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}" Width="140"/>
+                        <TextBlock Text="{Binding Settings.LanguageLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Settings.AvailableLanguages}" SelectedItem="{Binding Settings.SelectedLanguage, Mode=TwoWay}" Width="140"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- SEARCH PANEL -->
-            <StackPanel IsVisible="{Binding IsSearchOpen}" 
+            <StackPanel IsVisible="{Binding Search.IsSearchOpen}"
                         Spacing="8"
                         PropertyChanged="SearchPanel_PropertyChanged">
                         <TextBox x:Name="SearchInput"
-                            Text="{Binding SearchQuery, Mode=TwoWay}" 
-                            PlaceholderText="{Binding SearchPlaceholder}"
+                            Text="{Binding Search.SearchQuery}"
+                            PlaceholderText="{Binding Search.SearchPlaceholder}"
                             CornerRadius="10"/>
                             
-                <ListBox ItemsSource="{Binding SearchResults}" 
-                        SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                <ListBox ItemsSource="{Binding Search.SearchResults}"
+                        SelectedItem="{Binding Search.SelectedSearchResult, Mode=TwoWay}"
                         MaxHeight="200"
                         Background="{DynamicResource SearchBackgroundBrush}" 
                         CornerRadius="10">
