@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,6 +28,7 @@ public partial class MainViewModel : ViewModelBase
     // Sub-ViewModels
     public SearchViewModel Search { get; } = new();
     public SettingsViewModel Settings { get; } = new();
+    public FavoritesViewModel Favorites { get; } = new();
 
     [ObservableProperty] private string _cityName = "Loading...";
     [ObservableProperty] private string _currentTemperature = "--°";
@@ -47,7 +49,6 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        // Propojení událostí z podřízených ViewModelů
         Search.LocationSelected += async (location) =>
         {
             await LoadWeatherForLocationAsync(location.Latitude, location.Longitude, location.Name, forceRefresh: true);
@@ -56,10 +57,17 @@ public partial class MainViewModel : ViewModelBase
         Settings.LanguageChanged += (language) =>
         {
             UpdateLocalizedTexts();
-            if (_lastWeather != null)
-            {
-                UpdateUI(_lastWeather);
-            }
+            if (_lastWeather != null) UpdateUI(_lastWeather);
+        };
+
+        Settings.UnitsChanged += () =>
+        {
+            if (_lastWeather != null) UpdateUI(_lastWeather);
+        };
+
+        Favorites.FavoriteSelected += async (location) =>
+        {
+            await LoadWeatherForLocationAsync(location.Latitude, location.Longitude, location.Name, forceRefresh: false);
         };
 
         _ = InitializeAsync();
@@ -71,7 +79,8 @@ public partial class MainViewModel : ViewModelBase
         _currentLat = settings.Latitude;
         _currentLon = settings.Longitude;
 
-        Settings.Initialize(settings.Theme, settings.Language);
+        Favorites.Initialize(settings.Favorites);
+        Settings.Initialize(settings.Theme, settings.Language, settings.TemperatureUnit, settings.WindSpeedUnit);
         UpdateLocalizedTexts();
 
         bool isCacheValid = (DateTime.Now - settings.LastUpdated).TotalMinutes < 15;
@@ -87,7 +96,6 @@ public partial class MainViewModel : ViewModelBase
         WindHeader = isCzech ? "💨 Vítr" : "💨 Wind";
         HumidityHeader = isCzech ? "💧 Vlhkost" : "💧 Humidity";
 
-        // Aktualizace zástupných textů v podřízených ViewModelech
         Search.SearchPlaceholder = isCzech ? "Zadejte název města..." : "Enter city name...";
         Settings.UpdateLocalizedTexts();
     }
@@ -139,6 +147,18 @@ public partial class MainViewModel : ViewModelBase
         {
             WeatherCondition = $"Error: {ex.Message}";
         }
+
+        Favorites.UpdateCurrentLocation(lat, lon, name);
+    }
+
+    private double FormatTemp(double celsius)
+    {
+        return Settings.SelectedTemperatureUnit == "°F" ? (celsius * 1.8 + 32) : celsius;
+    }
+
+    private double FormatWind(double kmh)
+    {
+        return Settings.SelectedWindSpeedUnit == "mph" ? (kmh * 0.621371) : kmh;
     }
 
     private void UpdateUI(WeatherResponse? weather)
@@ -150,8 +170,11 @@ public partial class MainViewModel : ViewModelBase
         bool isCzech = effectiveLanguage == "Czech";
         var culture = isCzech ? new CultureInfo("cs-CZ") : new CultureInfo("en-US");
 
-        CurrentTemperature = $"{Math.Round(weather.Current.Temperature)}°";
-        WindSpeed = $"{Math.Round(weather.Current.WindSpeed)} km/h";
+        string tempUnit = Settings.GetEffectiveTemperatureUnit();
+        string windUnit = Settings.GetEffectiveWindSpeedUnit();
+
+        CurrentTemperature = $"{Math.Round(FormatTemp(weather.Current.Temperature))}{tempUnit}";
+        WindSpeed = $"{Math.Round(FormatWind(weather.Current.WindSpeed))} {windUnit}";
         Humidity = $"{weather.Current.Humidity} %";
 
         WeatherCondition = WeatherMapper.MapCodeToCondition(weather.Current.WeatherCode, effectiveLanguage);
@@ -161,7 +184,9 @@ public partial class MainViewModel : ViewModelBase
         {
             string highLabel = isCzech ? "Max" : "H";
             string lowLabel = isCzech ? "Min" : "L";
-            TempRange = $"{highLabel}: {Math.Round(weather.Daily.TempMax[0])}°  |  {lowLabel}: {Math.Round(weather.Daily.TempMin[0])}°";
+            double maxTemp = FormatTemp(weather.Daily.TempMax[0]);
+            double minTemp = FormatTemp(weather.Daily.TempMin[0]);
+            TempRange = $"{highLabel}: {Math.Round(maxTemp)}{tempUnit}  |  {lowLabel}: {Math.Round(minTemp)}{tempUnit}";
         }
 
         HourlyForecast.Clear();
@@ -174,11 +199,12 @@ public partial class MainViewModel : ViewModelBase
             {
                 var dt = DateTime.Parse(weather.Hourly.Time[i]);
                 string timeLabel = (i == currentHour) ? (isCzech ? "Teď" : "Now") : dt.ToString("HH:mm");
+                double hourlyTemp = FormatTemp(weather.Hourly.Temperature[i]);
 
                 HourlyForecast.Add(new HourlyItem(
                     timeLabel, 
                     WeatherMapper.MapCodeToIcon(weather.Hourly.WeatherCode[i]),
-                    $"{Math.Round(weather.Hourly.Temperature[i])}°"));
+                    $"{Math.Round(hourlyTemp)}{tempUnit}"));
             }
         }
 
@@ -195,10 +221,13 @@ public partial class MainViewModel : ViewModelBase
                     dayName = char.ToUpper(dayName[0]) + dayName[1..];
                 }
 
+                double minDaily = FormatTemp(weather.Daily.TempMin[i]);
+                double maxDaily = FormatTemp(weather.Daily.TempMax[i]);
+
                 DailyForecast.Add(new DailyItem(
                     dayName, 
                     WeatherMapper.MapCodeToIcon(weather.Daily.WeatherCode[i]),
-                    $"{Math.Round(weather.Daily.TempMin[i])}° / {Math.Round(weather.Daily.TempMax[i])}°"));
+                    $"{Math.Round(minDaily)}{tempUnit} / {Math.Round(maxDaily)}{tempUnit}"));
             }
         }
     }
