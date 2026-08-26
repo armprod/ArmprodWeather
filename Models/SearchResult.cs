@@ -26,7 +26,7 @@ public class LocationItem
     [JsonPropertyName("admin1")]
     public string Admin1 { get; set; } = string.Empty;
 
-    // Clear display: ‘Brno (South Moravian Region), Czech Republic’
+    // Clear overview in UI: "Brno (South Moravian Region), Czechia"
     public string DisplayName => string.IsNullOrEmpty(Admin1)
         ? $"{Name}, {Country}"
         : $"{Name} ({Admin1}), {Country}";

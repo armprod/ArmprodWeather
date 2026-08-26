@@ -24,6 +24,7 @@ public partial class MainViewModel : ViewModelBase
     private double _currentLat = 49.1951;
     private double _currentLon = 16.6077;
     private WeatherResponse? _lastWeather;
+    private DateTime? _lastFailedRefreshAttempt;
 
     // Sub-ViewModels
     public SearchViewModel Search { get; } = new();
@@ -43,6 +44,15 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _dailyForecastHeader = "7-day forecast";
     [ObservableProperty] private string _windHeader = "💨 Wind";
     [ObservableProperty] private string _humidityHeader = "💧 Humidity";
+
+    // Statuses
+    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _hasError;
+    [ObservableProperty] private string _errorMessage = string.Empty;
+    [ObservableProperty] private bool _isOffline;
+    [ObservableProperty] private string _lastUpdatedText = string.Empty;
+    [ObservableProperty] private string _offlineHeader = string.Empty;
+    [ObservableProperty] private string _offlineMessage = string.Empty;
 
     public ObservableCollection<HourlyItem> HourlyForecast { get; } = new();
     public ObservableCollection<DailyItem> DailyForecast { get; } = new();
@@ -76,15 +86,18 @@ public partial class MainViewModel : ViewModelBase
     private async Task InitializeAsync()
     {
         var settings = _settingsService.LoadSettings();
-        _currentLat = settings.Latitude;
-        _currentLon = settings.Longitude;
 
-        Favorites.Initialize(settings.Favorites);
+        string initialCity = string.IsNullOrWhiteSpace(settings.CityName) ? "Praha" : settings.CityName;
+        double initialLat = settings.Latitude == 0 ? 50.0755 : settings.Latitude;
+        double initialLon = settings.Longitude == 0 ? 14.4378 : settings.Longitude;
+
+        Favorites.Initialize(settings.Favorites, initialCity, initialLat, initialLon);
+
         Settings.Initialize(settings.Theme, settings.Language, settings.TemperatureUnit, settings.WindSpeedUnit);
         UpdateLocalizedTexts();
 
         bool isCacheValid = (DateTime.Now - settings.LastUpdated).TotalMinutes < 15;
-        await LoadWeatherForLocationAsync(settings.Latitude, settings.Longitude, settings.CityName, forceRefresh: !isCacheValid);
+        await LoadWeatherForLocationAsync(initialLat, initialLon, initialCity, forceRefresh: !isCacheValid);
     }
 
     private void UpdateLocalizedTexts()
@@ -96,8 +109,20 @@ public partial class MainViewModel : ViewModelBase
         WindHeader = isCzech ? "💨 Vítr" : "💨 Wind";
         HumidityHeader = isCzech ? "💧 Vlhkost" : "💧 Humidity";
 
+        OfflineHeader = isCzech ? "Jste v offline režimu" : "You are offline";
+
         Search.SearchPlaceholder = isCzech ? "Zadejte název města..." : "Enter city name...";
         Settings.UpdateLocalizedTexts();
+
+        var settings = _settingsService.LoadSettings();
+        UpdateLastUpdatedText(settings.LastUpdated);
+
+        if (HasError)
+        {
+            ErrorMessage = isCzech 
+                ? "Chybí připojení k internetu nebo se nepodařilo načíst data." 
+                : "No internet connection or failed to load data.";
+        }
     }
 
     [RelayCommand]
@@ -108,14 +133,21 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task LoadWeatherForLocationAsync(double lat, double lon, string name, bool forceRefresh = false)
     {
+        IsLoading = true;
+        HasError = false;
+        ErrorMessage = string.Empty;
+
+        var settings = _settingsService.LoadSettings();
+
         try
         {
             _currentLat = lat;
             _currentLon = lon;
             CityName = name;
 
-            var settings = _settingsService.LoadSettings();
+            Favorites.UpdateCurrentLocation(lat, lon, name);
 
+            // Chache control
             if (!forceRefresh && settings.CityName == name && (DateTime.Now - settings.LastUpdated).TotalMinutes < 15)
             {
                 if (!string.IsNullOrEmpty(settings.RawWeatherJson))
@@ -123,16 +155,26 @@ public partial class MainViewModel : ViewModelBase
                     var cachedWeather = JsonSerializer.Deserialize<WeatherResponse>(settings.RawWeatherJson);
                     if (cachedWeather != null)
                     {
+                        IsOffline = false;
+                        UpdateLastUpdatedText(settings.LastUpdated);
                         UpdateUI(cachedWeather);
+                        Favorites.UpdateCurrentLocation(lat, lon, name);
                         return;
                     }
                 }
             }
 
-            WeatherCondition = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage) == "Czech" ? "Načítání..." : "Loading...";
-
+            // API load
             var weather = await _weatherService.GetWeatherAsync(lat, lon);
-            if (weather?.Current == null) return;
+            
+            if (weather?.Current == null)
+            {
+                HandleLoadError(
+                    "Nepodařilo se získat data z meteo služby.",
+                    "Failed to retrieve data from weather service.",
+                    settings);
+                return;
+            }
 
             settings.CityName = name;
             settings.Latitude = lat;
@@ -141,14 +183,96 @@ public partial class MainViewModel : ViewModelBase
             settings.RawWeatherJson = JsonSerializer.Serialize(weather);
             _settingsService.SaveSettings(settings);
 
+            _lastFailedRefreshAttempt = null;
+            IsOffline = false;
+            UpdateLastUpdatedText(settings.LastUpdated);
             UpdateUI(weather);
+            Favorites.UpdateCurrentLocation(lat, lon, name);
+        }
+        catch (System.Net.Http.HttpRequestException)
+        {
+            HandleLoadError(
+                "Chybí připojení k internetu. Zkontrolujte síť a zkuste to znovu.",
+                "No internet connection. Please check your network and try again.",
+                settings);
         }
         catch (Exception ex)
         {
-            WeatherCondition = $"Error: {ex.Message}";
+            HandleLoadError(
+                $"Došlo k chybě: {ex.Message}",
+                $"An error occurred: {ex.Message}",
+                settings);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void HandleLoadError(string czMessage, string enMessage, UserSettings settings)
+    {
+        _lastFailedRefreshAttempt = DateTime.Now;
+
+        // Load Data from Disk
+        if (_lastWeather == null && !string.IsNullOrEmpty(settings.RawWeatherJson))
+        {
+            try
+            {
+                var cachedWeather = JsonSerializer.Deserialize<WeatherResponse>(settings.RawWeatherJson);
+                if (cachedWeather != null)
+                {
+                    UpdateUI(cachedWeather);
+                }
+            }
+            catch { }
         }
 
-        Favorites.UpdateCurrentLocation(lat, lon, name);
+        // Offline bar show, if we have data from disk
+        if (_lastWeather != null)
+        {
+            IsOffline = true;
+            UpdateLastUpdatedText(settings.LastUpdated);
+        }
+        else
+        {
+            IsOffline = false;
+            SetErrorState(czMessage, enMessage);
+        }
+    }
+
+    private void UpdateLastUpdatedText(DateTime lastUpdated)
+    {
+        if (lastUpdated == default)
+        {
+            LastUpdatedText = string.Empty;
+            OfflineMessage = string.Empty;
+            return;
+        }
+
+        bool isCzech = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage) == "Czech";
+        string timeStr = lastUpdated.ToString("HH:mm");
+        LastUpdatedText = timeStr;
+
+        if (_lastFailedRefreshAttempt.HasValue && IsOffline)
+        {
+            string failTime = _lastFailedRefreshAttempt.Value.ToString("HH:mm");
+            OfflineMessage = isCzech 
+                ? $"Obnovení v {failTime} selhalo • Data z {timeStr}" 
+                : $"Refresh at {failTime} failed • Cached {timeStr}";
+        }
+        else
+        {
+            OfflineMessage = isCzech 
+                ? $"Zobrazena neaktuální data ({timeStr})" 
+                : $"Showing cached data ({timeStr})";
+        }
+    }
+
+    private void SetErrorState(string czMessage, string enMessage)
+    {
+        HasError = true;
+        bool isCzech = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage) == "Czech";
+        ErrorMessage = isCzech ? czMessage : enMessage;
     }
 
     private double FormatTemp(double celsius)
@@ -182,22 +306,25 @@ public partial class MainViewModel : ViewModelBase
 
         if (weather.Daily?.TempMax is { Count: > 0 } && weather.Daily?.TempMin is { Count: > 0 })
         {
-            string highLabel = isCzech ? "Max" : "H";
-            string lowLabel = isCzech ? "Min" : "L";
+            string highLabel = isCzech ? "V" : "H";
+            string lowLabel = isCzech ? "N" : "L";
             double maxTemp = FormatTemp(weather.Daily.TempMax[0]);
             double minTemp = FormatTemp(weather.Daily.TempMin[0]);
             TempRange = $"{highLabel}: {Math.Round(maxTemp)}{tempUnit}  |  {lowLabel}: {Math.Round(minTemp)}{tempUnit}";
         }
 
         HourlyForecast.Clear();
-        if (weather.Hourly?.Time != null && weather.Hourly?.WeatherCode != null && weather.Hourly?.Temperature != null)
+        if (weather.Hourly?.Time != null && weather.Hourly.WeatherCode != null && weather.Hourly.Temperature != null)
         {
             int currentHour = DateTime.Now.Hour;
-            int maxItems = Math.Min(currentHour + 24, weather.Hourly.Time.Count);
+            int availableCount = Math.Min(weather.Hourly.Time.Count, 
+                                Math.Min(weather.Hourly.WeatherCode.Count, weather.Hourly.Temperature.Count));
+            int maxItems = Math.Min(currentHour + 24, availableCount);
 
             for (int i = currentHour; i < maxItems; i++)
             {
-                var dt = DateTime.Parse(weather.Hourly.Time[i]);
+                if (!DateTime.TryParse(weather.Hourly.Time[i], out var dt)) continue;
+
                 string timeLabel = (i == currentHour) ? (isCzech ? "Teď" : "Now") : dt.ToString("HH:mm");
                 double hourlyTemp = FormatTemp(weather.Hourly.Temperature[i]);
 
@@ -209,11 +336,16 @@ public partial class MainViewModel : ViewModelBase
         }
 
         DailyForecast.Clear();
-        if (weather.Daily?.Time != null && weather.Daily?.WeatherCode != null && weather.Daily?.TempMin != null && weather.Daily?.TempMax != null)
+        if (weather.Daily?.Time != null && weather.Daily.WeatherCode != null && weather.Daily.TempMin != null && weather.Daily.TempMax != null)
         {
-            for (int i = 0; i < weather.Daily.Time.Count; i++)
+            int availableCount = Math.Min(weather.Daily.Time.Count, 
+                                Math.Min(weather.Daily.WeatherCode.Count, 
+                                Math.Min(weather.Daily.TempMin.Count, weather.Daily.TempMax.Count)));
+
+            for (int i = 0; i < availableCount; i++)
             {
-                var dt = DateTime.Parse(weather.Daily.Time[i]);
+                if (!DateTime.TryParse(weather.Daily.Time[i], out var dt)) continue;
+
                 string dayName = (i == 0) ? (isCzech ? "Dnes" : "Today") : dt.ToString("ddd", culture);
 
                 if (isCzech && dayName is { Length: > 0 })

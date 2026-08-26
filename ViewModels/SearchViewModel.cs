@@ -12,6 +12,8 @@ namespace ArmprodWeather.ViewModels;
 public partial class SearchViewModel : ViewModelBase
 {
     private readonly LocationService _locationService = new();
+    private readonly SettingsService _settingsService = new();
+    private readonly LocalizationService _localizationService = new();
     private CancellationTokenSource? _searchCts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -21,7 +23,7 @@ public partial class SearchViewModel : ViewModelBase
 
     public ObservableCollection<LocationItem> SearchResults { get; } = new();
 
-    // Událost informující MainViewModel o výběru města
+    // Event informate MainViewModel abour selected city
     public event Action<LocationItem>? LocationSelected;
 
     [RelayCommand]
@@ -50,7 +52,10 @@ public partial class SearchViewModel : ViewModelBase
             {
                 await Task.Delay(300, token);
 
-                var results = await _locationService.SearchCityAsync(value);
+                var settings = _settingsService.LoadSettings();
+                string langCode = _localizationService.GetApiLanguageCode(settings.Language);
+
+                var results = await _locationService.SearchLocationsAsync(value, langCode);
 
                 if (token.IsCancellationRequested) return;
 
@@ -87,7 +92,6 @@ public partial class SearchViewModel : ViewModelBase
             SearchQuery = string.Empty;
             SelectedSearchResult = null;
 
-            // Vyvolání události pro nacítění počasí
             LocationSelected?.Invoke(selected);
         }
     }

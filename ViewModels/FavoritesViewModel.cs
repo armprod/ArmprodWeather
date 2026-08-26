@@ -21,7 +21,7 @@ public partial class FavoritesViewModel : ViewModelBase
     private double _currentLon;
     private string _currentCityName = string.Empty;
 
-    public void Initialize(List<FavoriteLocation>? savedFavorites)
+    public void Initialize(List<FavoriteLocation>? savedFavorites, string currentCity, double lat, double lon)
     {
         Favorites.Clear();
         if (savedFavorites != null)
@@ -31,27 +31,25 @@ public partial class FavoritesViewModel : ViewModelBase
                 Favorites.Add(fav);
             }
         }
+
+        UpdateCurrentLocation(lat, lon, currentCity);
     }
 
     public void UpdateCurrentLocation(double lat, double lon, string cityName)
     {
         _currentLat = lat;
         _currentLon = lon;
-        _currentCityName = cityName;
+        _currentCityName = cityName ?? string.Empty;
 
-        IsCurrentFavorite = Favorites.Any(f => 
-            Math.Abs(f.Latitude - lat) < 0.01 && 
-            Math.Abs(f.Longitude - lon) < 0.01);
+        IsCurrentFavorite = Favorites.Any(IsMatch);
     }
 
     [RelayCommand]
     private void ToggleCurrentFavorite()
     {
-        if (string.IsNullOrEmpty(_currentCityName)) return;
+        if (string.IsNullOrWhiteSpace(_currentCityName)) return;
 
-        var existing = Favorites.FirstOrDefault(f => 
-            Math.Abs(f.Latitude - _currentLat) < 0.01 && 
-            Math.Abs(f.Longitude - _currentLon) < 0.01);
+        var existing = Favorites.FirstOrDefault(IsMatch);
 
         if (existing != null)
         {
@@ -64,9 +62,7 @@ public partial class FavoritesViewModel : ViewModelBase
             IsCurrentFavorite = true;
         }
 
-        var settings = _settingsService.LoadSettings();
-        settings.Favorites = Favorites.ToList();
-        _settingsService.SaveSettings(settings);
+        SaveFavorites();
     }
 
     [RelayCommand]
@@ -76,5 +72,23 @@ public partial class FavoritesViewModel : ViewModelBase
         {
             FavoriteSelected?.Invoke(location);
         }
+    }
+
+    private bool IsMatch(FavoriteLocation f)
+    {
+        bool nameMatch = !string.IsNullOrWhiteSpace(_currentCityName) && 
+                          f.Name.Equals(_currentCityName, StringComparison.OrdinalIgnoreCase);
+
+        bool coordMatch = Math.Abs(f.Latitude - _currentLat) < 0.05 && 
+                         Math.Abs(f.Longitude - _currentLon) < 0.05;
+
+        return nameMatch || coordMatch;
+    }
+
+    private void SaveFavorites()
+    {
+        var settings = _settingsService.LoadSettings();
+        settings.Favorites = Favorites.ToList();
+        _settingsService.SaveSettings(settings);
     }
 }

@@ -15,6 +15,13 @@ public class LocalizationService
         return selectedLanguage == "System" ? SystemLanguage : selectedLanguage;
     }
 
+    // Returns a 2-character language code (e.g. ‘cs’, ‘en’) for use in API calls.
+    public string GetApiLanguageCode(string selectedLanguage)
+    {
+        string effective = GetEffectiveLanguage(selectedLanguage);
+        return effective == "Czech" ? "cs" : "en";
+    }
+
     public void ApplyLanguageCulture(string language)
     {
         string effective = GetEffectiveLanguage(language);
