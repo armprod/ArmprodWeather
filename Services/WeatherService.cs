@@ -23,7 +23,13 @@ public class WeatherService
         string latStr = lat.ToString(CultureInfo.InvariantCulture);
         string lonStr = lon.ToString(CultureInfo.InvariantCulture);
 
-        string url = $"https://api.open-meteo.com/v1/forecast?latitude={latStr}&longitude={lonStr}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto";
+    string url = $"https://api.open-meteo.com/v1/forecast?" +
+             $"latitude={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
+             $"longitude={lon.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
+             $"current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,surface_pressure,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m,cloud_cover,visibility&" +
+             $"hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,uv_index&" +
+             $"daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum,daylight_duration,sunshine_duration&" +
+             $"timezone=auto";
 
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();

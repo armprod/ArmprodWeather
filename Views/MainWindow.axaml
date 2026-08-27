@@ -154,9 +154,23 @@
             <!-- MAIN SCROLL CONTENT -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
                 <StackPanel Margin="20,0,20,20" Spacing="20">
-                    
+                            
                     <!-- HERO SECTOR -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="10" Margin="0,10,0,10">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8" Margin="0,10,0,10">
+                        
+                        <!-- local time of displayed city -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" 
+                                CornerRadius="12" 
+                                Padding="10,4" 
+                                HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="🕒" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding LocalTimeHeader}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding LocalTimeText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Weather Icon -->
                         <Border Width="120" Height="120" 
                                 Background="{DynamicResource CardBackgroundBrush}"
                                 CornerRadius="60" 
@@ -215,22 +229,100 @@
                     </Border>
 
                     <!-- DETAIL GRID -->
-                    <UniformGrid Columns="2" Rows="2">
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="15" Margin="0,0,5,10">
-                            <StackPanel Spacing="5">
-                                <TextBlock Text="{Binding WindHeader}" FontSize="12" Opacity="0.7"/>
-                                <TextBlock Text="{Binding WindSpeed}" FontSize="18" FontWeight="Bold"/>
-                            </StackPanel>
+                    <UniformGrid Columns="2">
+                        <!-- Wind Card-->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" 
+                                CornerRadius="16" 
+                                Padding="14" 
+                                Margin="4" 
+                                MinHeight="110">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <!-- Hlavička -->
+                                <TextBlock Grid.Row="0" Text="{Binding WindHeader}" FontSize="12" Opacity="0.6"/>
+                                
+                                <!-- Hlavní rychlost -->
+                                <TextBlock Grid.Row="1" Text="{Binding WindSpeed}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                
+                                <!-- Doplňující data ve dvou sloupcích (Směr | Nárazy) -->
+                                <Grid Grid.Row="2" ColumnDefinitions="Auto, *">
+                                    <TextBlock Grid.Column="0" 
+                                            Text="{Binding WindDirectionText}" 
+                                            FontSize="11" 
+                                            Opacity="0.8" 
+                                            Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" 
+                                            Text="{Binding WindGustsText}" 
+                                            FontSize="11" 
+                                            Opacity="0.6" 
+                                            HorizontalAlignment="Right"/>
+                                </Grid>
+                            </Grid>
                         </Border>
 
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="15" Margin="5,0,0,10">
-                            <StackPanel Spacing="5">
-                                <TextBlock Text="{Binding HumidityHeader}" FontSize="12" Opacity="0.7"/>
-                                <TextBlock Text="{Binding Humidity}" FontSize="18" FontWeight="Bold"/>
-                            </StackPanel>
+                        <!-- KARTA: Vlhkost -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding HumidityHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding Humidity}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding DewPointText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
                         </Border>
+
+                        <!-- KARTA: Pocitová teplota -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding ApparentTempHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding ApparentTempText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding CloudCoverText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- KARTA: Tlak -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding PressureHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding PressureText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding VisibilityText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- KARTA: UV Index -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding UvIndexHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding UvIndexText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding UvRiskText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- KARTA: Srážky -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding PrecipProbHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding PrecipProbText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding PrecipAmountText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- KARTA 7: Východ slunce -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding SunriseHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding SunriseText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding DaylightDurationText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- KARTA 8: Západ slunce -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
+                            <Grid RowDefinitions="Auto, Auto, Auto">
+                                <TextBlock Grid.Row="0" Text="{Binding SunsetHeader}" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Grid.Row="1" Text="{Binding SunsetText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
+                                <TextBlock Grid.Row="2" Text="{Binding SunshineText}" FontSize="11" Opacity="0.6"/>
+                            </Grid>
+                        </Border>
+
                     </UniformGrid>
-
                 </StackPanel>
             </ScrollViewer>
         </Grid>
