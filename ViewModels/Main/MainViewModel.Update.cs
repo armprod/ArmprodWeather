@@ -202,34 +202,42 @@ public partial class MainViewModel
         if (weather.Hourly?.Time == null || weather.Hourly.WeatherCode == null || weather.Hourly.Temperature == null) return;
 
         int availableCount = Math.Min(weather.Hourly.Time.Count, Math.Min(weather.Hourly.WeatherCode.Count, weather.Hourly.Temperature.Count));
-        int startIdx = 0;
-        DateTime now = DateTime.Now;
 
+        DateTime cityNow = DateTime.TryParse(weather.Current?.Time, out var parsedCurrent) 
+        ? parsedCurrent 
+        : DateTime.Now;
+
+        int startIdx = 0;
         for (int i = 0; i < availableCount; i++)
         {
-            if (DateTime.TryParse(weather.Hourly.Time[i], out var t) && t.Hour == now.Hour && t.Date == now.Date)
+            if (DateTime.TryParse(weather.Hourly.Time[i], out var t) 
+                && t.Date == cityNow.Date 
+                && t.Hour == cityNow.Hour)
             {
                 startIdx = i;
                 break;
             }
         }
 
-        int maxItems = Math.Min(startIdx + 24, availableCount);
+    int maxItems = Math.Min(startIdx + 24, availableCount);
         for (int i = startIdx; i < maxItems; i++)
         {
             if (!DateTime.TryParse(weather.Hourly.Time[i], out var dt)) continue;
 
             string timeLabel = (i == startIdx) ? (isCzech ? "Teď" : "Now") : dt.ToString("HH:mm");
+
             double hourlyTemp = WeatherPresentationMapper.ConvertTemp(weather.Hourly.Temperature[i], Settings.SelectedTemperatureUnit);
             double hourlyApparent = weather.Hourly.ApparentTemperature != null && weather.Hourly.ApparentTemperature.Count > i
                 ? WeatherPresentationMapper.ConvertTemp(weather.Hourly.ApparentTemperature[i], Settings.SelectedTemperatureUnit)
                 : hourlyTemp;
-            
+
             int rainProb = weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i 
                 ? weather.Hourly.PrecipitationProbability[i] 
                 : 0;
 
-            bool isHourlyDaytime = dt.Hour >= 6 && dt.Hour < 22;
+            bool isHourlyDaytime = weather.Hourly.IsDay != null && weather.Hourly.IsDay.Count > i 
+                ? weather.Hourly.IsDay[i] == 1 
+                : (dt.Hour >= 6 && dt.Hour < 20);
 
             HourlyForecast.Add(new HourlyItem(
                 timeLabel, 
@@ -271,9 +279,12 @@ public partial class MainViewModel
     {
         if (weather.Hourly?.SurfacePressure == null || weather.Hourly.Time == null) return null;
 
-        DateTime now = DateTime.Now;
+        DateTime cityNow = DateTime.TryParse(weather.Current?.Time, out var parsedCurrent) 
+            ? parsedCurrent 
+            : DateTime.Now;
+
         int currentIdx = weather.Hourly.Time.FindIndex(t => 
-            DateTime.TryParse(t, out var dt) && dt.Hour == now.Hour && dt.Date == now.Date);
+            DateTime.TryParse(t, out var dt) && dt.Hour == cityNow.Hour && dt.Date == cityNow.Date);
 
         if (currentIdx >= hoursAgo && weather.Hourly.SurfacePressure.Count > currentIdx - hoursAgo)
         {

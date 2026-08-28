@@ -85,6 +85,9 @@ public class HourlyData
 
     [JsonPropertyName("surface_pressure")]
     public List<double>? SurfacePressure { get; set; }
+
+    [JsonPropertyName("is_day")]
+    public List<int>? IsDay { get; set; }
 }
 
 public class DailyData

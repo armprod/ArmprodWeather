@@ -10,9 +10,6 @@ public static class WeatherPresentationMapper
     public static double ConvertWind(double kmh, string unit) =>
         unit == "mph" ? (kmh * 0.621371) : kmh;
 
-    public static string FormatIsoTime(string? isoDateTime) =>
-        DateTime.TryParse(isoDateTime, out var parsed) ? parsed.ToString("HH:mm") : "--:--";
-
     public static string FormatWindGusts(double gusts, string windUnit, bool isCzech) =>
         isCzech ? $"Nárazy {Math.Round(gusts)} {windUnit}" : $"Gusts {Math.Round(gusts)} {windUnit}";
 
@@ -163,5 +160,17 @@ public static class WeatherPresentationMapper
         else desc = isCzech ? "🟣 Velmi špatná" : "🟣 Very Unhealthy";
 
         return (valueStr, desc);
+    }
+
+    public static string FormatIsoTime(string? rawIsoTime)
+    {
+        if (string.IsNullOrEmpty(rawIsoTime)) return "--:--";
+
+        if (DateTime.TryParse(rawIsoTime, out var dt))
+        {
+            return dt.ToString("HH:mm");
+        }
+
+        return "--:--";
     }
 }

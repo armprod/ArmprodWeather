@@ -14,6 +14,7 @@ public class WeatherService
     public WeatherService()
     {
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "ArmprodWeatherApp/1.0");
+        _httpClient.Timeout = TimeSpan.FromSeconds(10);
     }
 
     // Loads Weather and Air values in written coordinates
@@ -24,18 +25,16 @@ public class WeatherService
 
         // URL for Main Weather API
         string weatherUrl = $"https://api.open-meteo.com/v1/forecast?" +
-                    $"latitude={latStr}&" +
-                    $"longitude={lonStr}&" +
-                    $"current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,visibility,dew_point_2m&" +
-                    $"hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,uv_index,surface_pressure&" +
-                    $"daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_probability_max,precipitation_sum,moonrise,moonset,moon_phase&" +
-                    $"timezone=auto";
+                            $"latitude={latStr}&" +
+                            $"longitude={lonStr}&" +
+                            $"current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,visibility,dew_point_2m&" +
+                            $"hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,uv_index,surface_pressure&" +
+                            $"daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_probability_max,precipitation_sum,moonrise,moonset,moon_phase&" +
+                            $"timezone=auto&past_days=1";
 
         // URL for Air Quality API
-        string airQualityUrl = $"https://air-quality-api.open-meteo.com/v1/air-quality?" +
-                               $"latitude={latStr}&" +
-                               $"longitude={lonStr}&" +
-                               $"current=us_aqi,pm2_5,pm10";
+        string airQualityUrl = FormattableString.Invariant(
+            $"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi,pm2_5,pm10");
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
