@@ -37,7 +37,6 @@ public static class WeatherMapper
     {
         bool isCzech = language == "Czech";
         
-        // Šipka ukazuje směr, kam vítr vane
         string[] arrows = { "⬇️", "↙️", "⬅️", "↖️", "⬆️", "↗️", "➡️", "↘️" };
         string[] directions = isCzech 
             ? new[] { "S", "SV", "V", "JV", "J", "JZ", "Z", "SZ" }

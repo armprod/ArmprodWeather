@@ -13,6 +13,9 @@ public class WeatherResponse
 
     [JsonPropertyName("daily")]
     public DailyData? Daily { get; set; }
+
+    [JsonPropertyName("air_quality")]
+    public AirQualityCurrentData? AirQuality { get; set; }
 }
 
 public class CurrentData
@@ -50,11 +53,11 @@ public class CurrentData
     [JsonPropertyName("dew_point_2m")]
     public double DewPoint { get; set; }
 
-    [JsonPropertyName("cloud_cover")]
-    public int CloudCover { get; set; }
-
     [JsonPropertyName("visibility")]
     public double Visibility { get; set; }
+
+    [JsonPropertyName("cloud_cover")]
+    public int CloudCover { get; set; }
 }
 
 public class HourlyData
@@ -79,6 +82,9 @@ public class HourlyData
 
     [JsonPropertyName("uv_index")]
     public List<double> UvIndex { get; set; } = new();
+
+    [JsonPropertyName("surface_pressure")]
+    public List<double>? SurfacePressure { get; set; }
 }
 
 public class DailyData
@@ -115,4 +121,31 @@ public class DailyData
 
     [JsonPropertyName("sunshine_duration")]
     public List<double>? SunshineDuration { get; set; }
+
+    [JsonPropertyName("moonrise")]
+    public List<string>? Moonrise { get; set; }
+
+    [JsonPropertyName("moonset")]
+    public List<string>? Moonset { get; set; }
+
+    [JsonPropertyName("moon_phase")]
+    public List<double>? MoonPhase { get; set; }
+}
+
+public class AirQualityResponse
+{
+    [JsonPropertyName("current")]
+    public AirQualityCurrentData? Current { get; set; }
+}
+
+public class AirQualityCurrentData
+{
+    [JsonPropertyName("us_aqi")]
+    public int UsAqi { get; set; }
+
+    [JsonPropertyName("pm2_5")]
+    public double Pm25 { get; set; }
+
+    [JsonPropertyName("pm10")]
+    public double Pm10 { get; set; }
 }

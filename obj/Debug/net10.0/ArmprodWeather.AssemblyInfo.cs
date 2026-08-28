@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © 2026 Armprod s.r.o.")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Practical multi-platform Weather application")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa147e2d0d2df0532e19c4ad97bfc17bc9888feb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+03d517cfa0c251b170419483a5894d52ca010ed1")]
 [assembly: System.Reflection.AssemblyProductAttribute("Armprod Weather")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Armprod Weather")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

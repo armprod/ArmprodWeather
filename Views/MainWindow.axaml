@@ -10,34 +10,6 @@
         Background="{DynamicResource AppBackgroundBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}">
 
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.ThemeDictionaries>
-                <!-- Dark Theme -->
-                <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
-                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
-                </ResourceDictionary>
-                <!-- Light Theme -->
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F4F6"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1C1C1E"/>
-                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#E5E5EA"/>
-                </ResourceDictionary>
-                <!-- Default Theme -->
-                <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
-                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
-                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
-
     <Panel>
         <Grid RowDefinitions="Auto,*" IsHitTestVisible="{Binding !IsLoading}">
             
@@ -46,13 +18,13 @@
                 <Grid ColumnDefinitions="*,Auto">
                     <DockPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
                         <TextBlock Text="{Binding CityName}"
-                                FontSize="22" 
-                                FontWeight="Bold"
-                                TextTrimming="CharacterEllipsis"
-                                ToolTip.Tip="{Binding CityName}"/>
+                                   FontSize="22" 
+                                   FontWeight="Bold"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding CityName}"/>
                     </DockPanel>
                     
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <StackPanel Classes="IconButton" Grid.Column="1" Orientation="Horizontal" Spacing="10">
                         <Button Command="{Binding Favorites.ToggleCurrentFavoriteCommand}"
                                 Background="Transparent" BorderThickness="0" Padding="4" Cursor="Hand" VerticalAlignment="Center">
                             <Panel>
@@ -66,7 +38,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- OFFLINE BANNER / INDICATOR -->
+                <!-- OFFLINE BANNER -->
                 <Border IsVisible="{Binding IsOffline}"
                         Background="#D32F2F"
                         CornerRadius="8"
@@ -75,19 +47,15 @@
                     <Grid ColumnDefinitions="Auto,*">
                         <TextBlock Text="📡❌" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OfflineHeader}"
-                                    FontWeight="Bold"
-                                    FontSize="12"
-                                    Foreground="White"/>
-                            <TextBlock Text="{Binding OfflineMessage}"
-                                    FontSize="11"
-                                    Foreground="#E0E0E0"/>
+                            <TextBlock Text="{Binding OfflineHeader}" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                            <TextBlock Text="{Binding OfflineMessage}" FontSize="11" Foreground="#E0E0E0"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
+                <!-- FAVORITES BAR -->
                 <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Margin="0,10,0,10"
-                            IsVisible="{Binding Favorites.Favorites.Count}">
+                              IsVisible="{Binding Favorites.Favorites.Count}">
                     <ItemsControl ItemsSource="{Binding Favorites.Favorites}" HorizontalAlignment="Center">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -96,7 +64,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="services:FavoriteLocation">
-                                <Button Content="{Binding Name}"
+                                <Button Classes="FavoriteCityButton" Content="{Binding Name}"
                                         Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Favorites.SelectFavoriteCommand}"
                                         CommandParameter="{Binding}"
                                         CornerRadius="16" Padding="12,6"/>
@@ -109,34 +77,23 @@
                 <Border IsVisible="{Binding Settings.IsSettingsOpen}" CornerRadius="12" Padding="16" Background="{DynamicResource CardBackgroundBrush}">
                     <StackPanel Spacing="10" Margin="15">
                         <TextBlock Text="{Binding Settings.SettingsTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-
-                        <!-- App Theme -->
                         <TextBlock Text="{Binding Settings.ThemeLabel}"/>
                         <ComboBox ItemsSource="{Binding Settings.AvailableThemes}" SelectedItem="{Binding Settings.SelectedTheme}" HorizontalAlignment="Stretch"/>
-
-                        <!-- App Language -->
                         <TextBlock Text="{Binding Settings.LanguageLabel}"/>
                         <ComboBox ItemsSource="{Binding Settings.AvailableLanguages}" SelectedItem="{Binding Settings.SelectedLanguage}" HorizontalAlignment="Stretch"/>
-
-                        <!-- Temperature Units -->
                         <TextBlock Text="{Binding Settings.TemperatureUnitLabel}"/>
                         <ComboBox ItemsSource="{Binding Settings.AvailableTemperatureUnits}" SelectedItem="{Binding Settings.SelectedTemperatureUnit}" HorizontalAlignment="Stretch"/>
-
-                        <!-- Wind Speed Units -->
                         <TextBlock Text="{Binding Settings.WindSpeedUnitLabel}"/>
                         <ComboBox ItemsSource="{Binding Settings.AvailableWindSpeedUnits}" SelectedItem="{Binding Settings.SelectedWindSpeedUnit}" HorizontalAlignment="Stretch"/>
                     </StackPanel>
                 </Border>
 
                 <!-- SEARCH PANEL -->
-                <StackPanel IsVisible="{Binding Search.IsSearchOpen}"
-                            Spacing="8"
-                            PropertyChanged="SearchPanel_PropertyChanged">
+                <StackPanel IsVisible="{Binding Search.IsSearchOpen}" Spacing="8" PropertyChanged="SearchPanel_PropertyChanged">
                     <TextBox x:Name="SearchInput"
                              Text="{Binding Search.SearchQuery}"
                              PlaceholderText="{Binding Search.SearchPlaceholder}"
                              CornerRadius="10"/>
-                                
                     <ListBox ItemsSource="{Binding Search.SearchResults}"
                              SelectedItem="{Binding Search.SelectedSearchResult, Mode=TwoWay}"
                              MaxHeight="200"
@@ -154,15 +111,10 @@
             <!-- MAIN SCROLL CONTENT -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
                 <StackPanel Margin="20,0,20,20" Spacing="20">
-                            
+                    
                     <!-- HERO SECTOR -->
                     <StackPanel HorizontalAlignment="Center" Spacing="8" Margin="0,10,0,10">
-                        
-                        <!-- local time of displayed city -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" 
-                                CornerRadius="12" 
-                                Padding="10,4" 
-                                HorizontalAlignment="Center">
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="🕒" FontSize="12" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding LocalTimeHeader}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
@@ -170,11 +122,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Weather Icon -->
-                        <Border Width="120" Height="120" 
-                                Background="{DynamicResource CardBackgroundBrush}"
-                                CornerRadius="60" 
-                                HorizontalAlignment="Center">
+                        <Border Width="120" Height="120" Background="{DynamicResource CardBackgroundBrush}" CornerRadius="60" HorizontalAlignment="Center">
                             <TextBlock Text="{Binding WeatherIcon}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
@@ -187,7 +135,6 @@
                     <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{Binding HourlyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
-                            
                             <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                                 <ItemsControl ItemsSource="{Binding HourlyForecast}">
                                     <ItemsControl.ItemsPanel>
@@ -213,7 +160,6 @@
                     <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
                         <StackPanel Spacing="12">
                             <TextBlock Text="{Binding DailyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
-                            
                             <ItemsControl ItemsSource="{Binding DailyForecast}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:DailyItem">
@@ -228,101 +174,121 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- DETAIL GRID -->
+                    <!-- DETAIL GRID (8 UNIFORM CARDS) -->
                     <UniformGrid Columns="2">
-                        <!-- Wind Card-->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" 
-                                CornerRadius="16" 
-                                Padding="14" 
-                                Margin="4" 
-                                MinHeight="110">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <!-- Hlavička -->
-                                <TextBlock Grid.Row="0" Text="{Binding WindHeader}" FontSize="12" Opacity="0.6"/>
-                                
-                                <!-- Hlavní rychlost -->
-                                <TextBlock Grid.Row="1" Text="{Binding WindSpeed}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                
-                                <!-- Doplňující data ve dvou sloupcích (Směr | Nárazy) -->
-                                <Grid Grid.Row="2" ColumnDefinitions="Auto, *">
-                                    <TextBlock Grid.Column="0" 
-                                            Text="{Binding WindDirectionText}" 
-                                            FontSize="11" 
-                                            Opacity="0.8" 
-                                            Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="1" 
-                                            Text="{Binding WindGustsText}" 
-                                            FontSize="11" 
-                                            Opacity="0.6" 
-                                            HorizontalAlignment="Right"/>
-                                </Grid>
-                            </Grid>
+                        <!-- Wind Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding WindHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding WindSpeed}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding WindDirectionText}" Classes="CardSubtext"/>
+                                <TextBlock Text="{Binding WindGustsText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA: Vlhkost -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding HumidityHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding Humidity}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding DewPointText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Humidity Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding HumidityHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding Humidity}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding DewPointText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA: Pocitová teplota -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding ApparentTempHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding ApparentTempText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding CloudCoverText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Apparent Temperature Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding ApparentTempHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding ApparentTempText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding TempDeltaText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA: Tlak -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding PressureHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding PressureText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding VisibilityText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Air Pressure & Trend Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding PressureHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding PressureText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding PressureAdviceText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA: UV Index -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding UvIndexHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding UvIndexText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding UvRiskText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- UV Index Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding UvIndexHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding UvIndexText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding UvRiskText}" Classes="CardSubtext"/>
+                                <TextBlock Text="{Binding PeakUvTimeText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA: Srážky -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding PrecipProbHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding PrecipProbText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding PrecipAmountText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Precipitation Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding PrecipProbHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding PrecipProbText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding PrecipAmountText}" Classes="CardSubtext"/>
+                                <TextBlock Text="{Binding HourlyPeakPrecipText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA 7: Východ slunce -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding SunriseHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding SunriseText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding DaylightDurationText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Visibility Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding VisibilityHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding VisibilityText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding VisibilityAdviceText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
-                        <!-- KARTA 8: Západ slunce -->
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Padding="14" Margin="4" MinHeight="105">
-                            <Grid RowDefinitions="Auto, Auto, Auto">
-                                <TextBlock Grid.Row="0" Text="{Binding SunsetHeader}" FontSize="12" Opacity="0.6"/>
-                                <TextBlock Grid.Row="1" Text="{Binding SunsetText}" FontSize="24" FontWeight="Bold" Margin="0,4,0,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding SunshineText}" FontSize="11" Opacity="0.6"/>
-                            </Grid>
+                        <!-- Cloud Cover Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding CloudCoverHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding CloudCoverText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding CloudCoverAdviceText}" Classes="CardSubtext"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sunrise Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding SunriseHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding SunriseText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding DaylightDurationText}" Classes="CardSubtext"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sunset Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding SunsetHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding SunsetText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding SunshineText}" Classes="CardSubtext"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- AQI Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding AqiHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding AqiText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding AqiAdviceText}" Classes="CardSubtext"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Moon Phase Card -->
+                        <Border Classes="WeatherCard">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding MoonHeader}" Classes="CardHeader"/>
+                                <TextBlock Text="{Binding MoonPhaseText}" Classes="CardValue"/>
+                                <TextBlock Text="{Binding MoonRiseSetText}" Classes="CardSubtext"/>
+                            </StackPanel>
                         </Border>
 
                     </UniformGrid>
+
                 </StackPanel>
             </ScrollViewer>
         </Grid>
@@ -348,12 +314,7 @@
                 ZIndex="20">
             <StackPanel Spacing="16" HorizontalAlignment="Center">
                 <TextBlock Text="⚠️" FontSize="40" HorizontalAlignment="Center"/>
-                
-                <TextBlock Text="{Binding ErrorMessage}" 
-                           TextWrapping="Wrap" 
-                           TextAlignment="Center" 
-                           FontSize="14"/>
-
+                <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" TextAlignment="Center" FontSize="14"/>
                 <Button Content="Zkuste to znovu / Retry" 
                         Command="{Binding RefreshCommand}"
                         HorizontalAlignment="Center"

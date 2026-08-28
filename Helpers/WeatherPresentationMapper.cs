@@ -19,12 +19,6 @@ public static class WeatherPresentationMapper
     public static string FormatDewPoint(double dewPoint, string tempUnit, bool isCzech) =>
         isCzech ? $"Rosný bod {Math.Round(dewPoint)}{tempUnit}" : $"Dew point {Math.Round(dewPoint)}{tempUnit}";
 
-    public static string FormatCloudCover(int percentage, bool isCzech) =>
-        isCzech ? $"Oblačnost {percentage} %" : $"Cloud cover {percentage} %";
-
-    public static string FormatVisibility(double visibilityMeters, bool isCzech) =>
-        isCzech ? $"Viditelnost {Math.Round(visibilityMeters / 1000.0, 1)} km" : $"Visibility {Math.Round(visibilityMeters / 1000.0, 1)} km";
-
     public static string FormatPrecipAmount(double amount, bool isCzech) =>
         isCzech ? $"{amount:F1} mm očekáváno" : $"{amount:F1} mm expected";
 
@@ -69,5 +63,105 @@ public static class WeatherPresentationMapper
         return isCzech 
             ? $"Meximum ({maxUv:F1}) kolem {peakTime}" 
             : $"Peak ({maxUv:F1}) around {peakTime}";
+    }
+
+    public static string FormatPressureWithTrend(double currentPressure, double? pastPressure, bool isCzech)
+    {
+        return $"{Math.Round(currentPressure)} hPa";
+    }
+
+    public static string GetPressureAdvice(double currentPressure, double? pastPressure, bool isCzech)
+    {
+        if (!pastPressure.HasValue) 
+            return isCzech ? "Bez data" : "No data";
+
+        double diff = currentPressure - pastPressure.Value;
+
+        if (diff <= -2.0)
+            return isCzech ? "⚠️ Rychlý pokles" : "⚠️ Rapid drop";
+        
+        if (diff <= -0.8)
+            return isCzech ? "📉 Mírný pokles" : "📉 Slight drop";
+
+        if (diff >= 2.0)
+            return isCzech ? "📈 Rychlý vzestup" : "📈 Rapid rise";
+
+        if (diff >= 0.8)
+            return isCzech ? "📈 Mírný vzestup" : "📈 Slight rise";
+
+        return isCzech ? "➡️ Stabilní" : "➡️ Steady";
+    }
+
+    public static (string Value, string Description) FormatVisibility(double visibilityMeters, string speedOrDistanceUnit, bool isCzech)
+    {
+        bool isImperial = speedOrDistanceUnit.Contains("mph", StringComparison.OrdinalIgnoreCase) || 
+                        speedOrDistanceUnit.Contains("mi", StringComparison.OrdinalIgnoreCase);
+
+        double distance = isImperial ? visibilityMeters / 1609.34 : visibilityMeters / 1000.0;
+        string unitSymbol = isImperial ? "mi" : "km";
+
+        string valueText = $"{distance:F1} {unitSymbol}";
+        string adviceText;
+
+        double km = visibilityMeters / 1000.0;
+        if (km >= 10)
+            adviceText = isCzech ? "Vynikající viditelnost" : "Excellent visibility";
+        else if (km >= 4)
+            adviceText = isCzech ? "Dobrá viditelnost" : "Good visibility";
+        else if (km >= 1)
+            adviceText = isCzech ? "Snížená viditelnost" : "Moderate visibility";
+        else
+            adviceText = isCzech ? "Hustá mlha" : "Dense fog";
+
+        return (valueText, adviceText);
+    }
+
+    public static (string Value, string Description) FormatCloudCover(int cloudPercent, bool isCzech)
+    {
+        string valueStr = $"{cloudPercent} %";
+
+        string desc;
+        if (cloudPercent <= 10) desc = isCzech ? "☀️ Jasno" : "☀️ Clear sky";
+        else if (cloudPercent <= 30) desc = isCzech ? "🌤️ Skoro jasno" : "🌤️ Mostly clear";
+        else if (cloudPercent <= 70) desc = isCzech ? "⛅ Polojasno" : "⛅ Partly cloudy";
+        else if (cloudPercent <= 90) desc = isCzech ? "🌥️ Skoro zataženo" : "🌥️ Mostly cloudy";
+        else desc = isCzech ? "☁️ Zataženo" : "☁️ Overcast";
+
+        return (valueStr, desc);
+    }
+
+    public static (string IconAndName, string Detail) GetMoonPhaseInfo(double moonPhase, string? moonrise, string? moonset, bool isCzech)
+    {
+        string name;
+        string icon;
+
+        if (moonPhase == 0.0 || moonPhase == 1.0) { icon = "🌑"; name = isCzech ? "Nov" : "New Moon"; }
+        else if (moonPhase < 0.25) { icon = "🌒"; name = isCzech ? "Dorůstající srp" : "Waxing Crescent"; }
+        else if (moonPhase == 0.25) { icon = "🌓"; name = isCzech ? "První čtvrť" : "First Quarter"; }
+        else if (moonPhase < 0.50) { icon = "🌔"; name = isCzech ? "Dorůstající měsíc" : "Waxing Gibbous"; }
+        else if (moonPhase == 0.50) { icon = "🌕"; name = isCzech ? "Úplněk" : "Full Moon"; }
+        else if (moonPhase < 0.75) { icon = "🌖"; name = isCzech ? "Couvající měsíc" : "Waning Gibbous"; }
+        else if (moonPhase == 0.75) { icon = "🌗"; name = isCzech ? "Poslední čtvrť" : "Last Quarter"; }
+        else { icon = "🌘"; name = isCzech ? "Ubývající srp" : "Waning Crescent"; }
+
+        string risesetText = (moonrise != null && moonset != null) 
+            ? $"↑ {moonrise}  ↓ {moonset}" 
+            : "";
+
+        return ($"{icon} {name}", risesetText);
+    }
+
+    public static (string Value, string Description) FormatAqi(int aqiValue, bool isCzech)
+    {
+        string valueStr = $"{aqiValue} AQI";
+        string desc;
+
+        if (aqiValue <= 50) desc = isCzech ? "🟢 Skvělá (Čistý vzduch)" : "🟢 Good";
+        else if (aqiValue <= 100) desc = isCzech ? "🟡 Střední (Akceptovatelná)" : "🟡 Moderate";
+        else if (aqiValue <= 150) desc = isCzech ? "🟠 Citlivé skupiny" : "🟠 Unhealthy for Sensitive";
+        else if (aqiValue <= 200) desc = isCzech ? "🔴 Nezdravá" : "🔴 Unhealthy";
+        else desc = isCzech ? "🟣 Velmi špatná" : "🟣 Very Unhealthy";
+
+        return (valueStr, desc);
     }
 }

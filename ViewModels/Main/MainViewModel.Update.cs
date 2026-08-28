@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using ArmprodWeather.Helpers;
 using ArmprodWeather.Models;
 
@@ -11,9 +12,9 @@ public partial class MainViewModel
     {
         bool isCzech = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage) == "Czech";
 
+        LocalTimeHeader = isCzech ? "Místní čas" : "Local time";
         HourlyForecastHeader = isCzech ? "Hodinová předpověď" : "Hourly forecast";
         DailyForecastHeader = isCzech ? "7denní předpověď" : "7-day forecast";
-        LocalTimeHeader = isCzech ? "Místní čas" : "Local time";
         WindHeader = isCzech ? "💨 Vítr" : "💨 Wind";
         HumidityHeader = isCzech ? "💧 Vlhkost" : "💧 Humidity";
         ApparentTempHeader = isCzech ? "🌡️ Pocitová teplota" : "🌡️ Feels like";
@@ -22,6 +23,11 @@ public partial class MainViewModel
         PrecipProbHeader = isCzech ? "🌧️ Očekávanost srážek" : "🌧️ Rain chance";
         SunriseHeader = isCzech ? "🌅 Východ slunce" : "🌅 Sunrise";
         SunsetHeader = isCzech ? "🌇 Západ slunce" : "🌇 Sunset";
+        VisibilityHeader = isCzech ? "👁️ Viditelnost" : "👁️ Visibility";
+        CloudCoverHeader = isCzech ? "☁️ Oblačnost" : "☁️ Cloud cover";
+        AqiHeader = isCzech ? "🍃 Kvalita ovzduší" : "🍃 Air Quality";
+        MoonHeader = isCzech ? "🌙 Měsíc" : "🌙 Moon";
+
         OfflineHeader = isCzech ? "Jste v offline režimu" : "You are offline";
 
         Search.SearchPlaceholder = isCzech ? "Zadejte název města..." : "Enter city name...";
@@ -39,40 +45,28 @@ public partial class MainViewModel
     private void UpdateUI(WeatherResponse? weather)
     {
         if (weather?.Current == null) return;
-
         _lastWeather = weather;
-        string effectiveLanguage = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage);
-        bool isCzech = effectiveLanguage == "Czech";
-        var culture = isCzech ? new CultureInfo("cs-CZ") : new CultureInfo("en-US");
 
+        string language = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage);
+        bool isCzech = language == "Czech";
+        var culture = isCzech ? new CultureInfo("cs-CZ") : new CultureInfo("en-US");
         string tempUnit = Settings.GetEffectiveTemperatureUnit();
         string windUnit = Settings.GetEffectiveWindSpeedUnit();
 
-        // 1. Základní meteo hodnoty & Pocitový teplotní rozdíl
-        double currentTemp = WeatherPresentationMapper.ConvertTemp(weather.Current.Temperature, Settings.SelectedTemperatureUnit);
-        double apparentTemp = WeatherPresentationMapper.ConvertTemp(weather.Current.ApparentTemperature, Settings.SelectedTemperatureUnit);
+        UpdateHeaderSection(weather, language, isCzech, culture, tempUnit);
 
-        CurrentTemperature = $"{Math.Round(currentTemp)}{tempUnit}";
-        ApparentTempText = $"{Math.Round(apparentTemp)}{tempUnit}";
-        TempDeltaText = WeatherPresentationMapper.FormatTempDelta(currentTemp, apparentTemp, tempUnit, isCzech);
+        UpdateGridCards(weather, language, isCzech, tempUnit, windUnit);
 
-        PressureText = $"{Math.Round(weather.Current.SurfacePressure)} hPa";
-        Humidity = $"{weather.Current.Humidity} %";
+        AnalyzeHourlyPeaks(weather, isCzech);
+        UpdateHourlyForecast(weather, isCzech, tempUnit);
+        UpdateDailyForecast(weather, isCzech, culture, tempUnit);
+    }
 
-        // 2. Vítr
-        double speed = WeatherPresentationMapper.ConvertWind(weather.Current.WindSpeed, Settings.SelectedWindSpeedUnit);
-        double gusts = WeatherPresentationMapper.ConvertWind(weather.Current.WindGusts, Settings.SelectedWindSpeedUnit);
-        WindSpeed = $"{Math.Round(speed)} {windUnit}";
-        WindGustsText = WeatherPresentationMapper.FormatWindGusts(gusts, windUnit, isCzech);
-        WindDirectionText = WeatherMapper.MapWindDirection(weather.Current.WindDirection, effectiveLanguage);
+    private void UpdateHeaderSection(WeatherResponse weather, string language, bool isCzech, CultureInfo culture, string tempUnit)
+    {
+        var current = weather.Current!;
 
-        // 3. Ikona & stav
-        bool isDay = weather.Current.IsDay == 1;
-        WeatherCondition = WeatherMapper.MapCodeToCondition(weather.Current.WeatherCode, effectiveLanguage);
-        WeatherIcon = WeatherMapper.MapCodeToIcon(weather.Current.WeatherCode, isDay);
-
-        // 4. Místní čas
-        if (DateTime.TryParse(weather.Current.Time, out var localDt))
+        if (current.Time is { } timeStr && DateTime.TryParse(timeStr, out var localDt))
         {
             string dayName = localDt.ToString("ddd", culture);
             if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
@@ -80,33 +74,13 @@ public partial class MainViewModel
         }
         else LocalTimeText = "--:--";
 
-        // 5. Doplňkové metriky
-        DewPointText = WeatherPresentationMapper.FormatDewPoint(WeatherPresentationMapper.ConvertTemp(weather.Current.DewPoint, Settings.SelectedTemperatureUnit), tempUnit, isCzech);
-        CloudCoverText = WeatherPresentationMapper.FormatCloudCover(weather.Current.CloudCover, isCzech);
-        VisibilityText = WeatherPresentationMapper.FormatVisibility(weather.Current.Visibility, isCzech);
+        bool isDay = current.IsDay == 1;
+        WeatherCondition = WeatherMapper.MapCodeToCondition(current.WeatherCode, language);
+        WeatherIcon = WeatherMapper.MapCodeToIcon(current.WeatherCode, isDay);
 
-        // 6. Analýza hodinových špiček (Srážky & UV Index na 24h)
-        AnalyzeHourlyPeaks(weather, isCzech);
+        double currentTemp = WeatherPresentationMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
+        CurrentTemperature = $"{Math.Round(currentTemp)}{tempUnit}";
 
-        // 7. UV Index & Riziko
-        if (weather.Daily?.UvIndexMax is { Count: > 0 })
-        {
-            double uv = weather.Daily.UvIndexMax[0];
-            UvIndexText = $"{uv:F1}";
-            UvRiskText = isCzech ? $"Riziko: {WeatherMapper.GetUvRiskLevel(uv, effectiveLanguage)}" : $"Risk: {WeatherMapper.GetUvRiskLevel(uv, effectiveLanguage)}";
-        }
-
-        // 8. Srážky
-        PrecipProbText = weather.Daily?.PrecipitationProbabilityMax is { Count: > 0 } ? $"{weather.Daily.PrecipitationProbabilityMax[0]} %" : "-- %";
-        PrecipAmountText = weather.Daily?.PrecipitationSum is { Count: > 0 } ? WeatherPresentationMapper.FormatPrecipAmount(weather.Daily.PrecipitationSum[0], isCzech) : "--";
-
-        // 9. Astronomické údaje
-        SunriseText = weather.Daily?.Sunrise is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(weather.Daily.Sunrise[0]) : "--:--";
-        SunsetText = weather.Daily?.Sunset is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(weather.Daily.Sunset[0]) : "--:--";
-        DaylightDurationText = weather.Daily?.DaylightDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatDaylightDuration(weather.Daily.DaylightDuration[0], isCzech) : "--";
-        SunshineText = weather.Daily?.SunshineDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatSunshineDuration(weather.Daily.SunshineDuration[0], isCzech) : "--";
-
-        // 10. Teplotní rozsah
         if (weather.Daily?.TempMax is { Count: > 0 } && weather.Daily?.TempMin is { Count: > 0 })
         {
             string highLabel = isCzech ? "V" : "H";
@@ -115,12 +89,77 @@ public partial class MainViewModel
             double minTemp = WeatherPresentationMapper.ConvertTemp(weather.Daily.TempMin[0], Settings.SelectedTemperatureUnit);
             TempRange = $"{highLabel}: {Math.Round(maxTemp)}{tempUnit}  |  {lowLabel}: {Math.Round(minTemp)}{tempUnit}";
         }
-
-        UpdateHourlyForecast(weather, isCzech, tempUnit);
-        UpdateDailyForecast(weather, isCzech, culture, tempUnit);
     }
 
-    // Pomocná metoda pro výpočet špiček srážek a UV v příštích 24h
+    private void UpdateGridCards(WeatherResponse weather, string language, bool isCzech, string tempUnit, string windUnit)
+    {
+        var current = weather.Current!;
+        var daily = weather.Daily;
+
+        double speed = WeatherPresentationMapper.ConvertWind(current.WindSpeed, Settings.SelectedWindSpeedUnit);
+        double gusts = WeatherPresentationMapper.ConvertWind(current.WindGusts, Settings.SelectedWindSpeedUnit);
+        WindSpeed = $"{Math.Round(speed)} {windUnit}";
+        WindGustsText = WeatherPresentationMapper.FormatWindGusts(gusts, windUnit, isCzech);
+        WindDirectionText = WeatherMapper.MapWindDirection(current.WindDirection, language);
+
+        Humidity = $"{current.Humidity} %";
+        DewPointText = WeatherPresentationMapper.FormatDewPoint(WeatherPresentationMapper.ConvertTemp(current.DewPoint, Settings.SelectedTemperatureUnit), tempUnit, isCzech);
+
+        double apparentTemp = WeatherPresentationMapper.ConvertTemp(current.ApparentTemperature, Settings.SelectedTemperatureUnit);
+        double currentTemp = WeatherPresentationMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
+        ApparentTempText = $"{Math.Round(apparentTemp)}{tempUnit}";
+        TempDeltaText = WeatherPresentationMapper.FormatTempDelta(currentTemp, apparentTemp, tempUnit, isCzech);
+
+        double? pastPressure = GetPastPressure(weather, 3);
+        PressureText = WeatherPresentationMapper.FormatPressureWithTrend(current.SurfacePressure, pastPressure, isCzech);
+        PressureAdviceText = WeatherPresentationMapper.GetPressureAdvice(current.SurfacePressure, pastPressure, isCzech);
+
+        if (daily?.UvIndexMax is { Count: > 0 })
+        {
+            double uv = daily.UvIndexMax[0];
+            UvIndexText = $"{uv:F1}";
+            UvRiskText = isCzech ? $"Riziko: {WeatherMapper.GetUvRiskLevel(uv, language)}" : $"Risk: {WeatherMapper.GetUvRiskLevel(uv, language)}";
+        }
+
+        PrecipProbText = daily?.PrecipitationProbabilityMax is { Count: > 0 } ? $"{daily.PrecipitationProbabilityMax[0]} %" : "-- %";
+        PrecipAmountText = daily?.PrecipitationSum is { Count: > 0 } ? WeatherPresentationMapper.FormatPrecipAmount(daily.PrecipitationSum[0], isCzech) : "--";
+
+        var (visValue, visDesc) = WeatherPresentationMapper.FormatVisibility(current.Visibility, windUnit, isCzech);
+        VisibilityText = visValue;
+        VisibilityAdviceText = visDesc;
+
+        var (cloudValue, cloudDesc) = WeatherPresentationMapper.FormatCloudCover(current.CloudCover, isCzech);
+        CloudCoverText = cloudValue;
+        CloudCoverAdviceText = cloudDesc;
+
+        SunriseText = daily?.Sunrise is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(daily.Sunrise[0]) : "--:--";
+        SunsetText = daily?.Sunset is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(daily.Sunset[0]) : "--:--";
+        DaylightDurationText = daily?.DaylightDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatDaylightDuration(daily.DaylightDuration[0], isCzech) : "--";
+        SunshineText = daily?.SunshineDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatSunshineDuration(daily.SunshineDuration[0], isCzech) : "--";
+
+        if (weather.AirQuality != null)
+        {
+            var (aqiValue, aqiDesc) = WeatherPresentationMapper.FormatAqi(weather.AirQuality.UsAqi, isCzech);
+            AqiText = aqiValue;
+            AqiAdviceText = aqiDesc;
+        }
+        else
+        {
+            AqiText = "--";
+            AqiAdviceText = isCzech ? "Nedostupné" : "Unavailable";
+        }
+
+        if (daily?.MoonPhase is { Count: > 0 })
+        {
+            string? moonrise = daily.Moonrise is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(daily.Moonrise[0]) : null;
+            string? moonset = daily.Moonset is { Count: > 0 } ? WeatherPresentationMapper.FormatIsoTime(daily.Moonset[0]) : null;
+
+            var (moonPhaseName, moonTimes) = WeatherPresentationMapper.GetMoonPhaseInfo(daily.MoonPhase[0], moonrise, moonset, isCzech);
+            MoonPhaseText = moonPhaseName;
+            MoonRiseSetText = moonTimes;
+        }
+    }
+
     private void AnalyzeHourlyPeaks(WeatherResponse weather, bool isCzech)
     {
         if (weather.Hourly?.Time == null) return;
@@ -134,7 +173,6 @@ public partial class MainViewModel
 
         for (int i = 0; i < limit; i++)
         {
-            // Srážky
             if (weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i)
             {
                 if (weather.Hourly.PrecipitationProbability[i] > maxRainProb)
@@ -144,7 +182,6 @@ public partial class MainViewModel
                 }
             }
 
-            // UV Index
             if (weather.Hourly.UvIndex != null && weather.Hourly.UvIndex.Count > i)
             {
                 if (weather.Hourly.UvIndex[i] > maxUv)
@@ -228,5 +265,21 @@ public partial class MainViewModel
                 $"{Math.Round(minDaily)}{tempUnit} / {Math.Round(maxDaily)}{tempUnit}"
             ));
         }
+    }
+
+    private double? GetPastPressure(WeatherResponse weather, int hoursAgo)
+    {
+        if (weather.Hourly?.SurfacePressure == null || weather.Hourly.Time == null) return null;
+
+        DateTime now = DateTime.Now;
+        int currentIdx = weather.Hourly.Time.FindIndex(t => 
+            DateTime.TryParse(t, out var dt) && dt.Hour == now.Hour && dt.Date == now.Date);
+
+        if (currentIdx >= hoursAgo && weather.Hourly.SurfacePressure.Count > currentIdx - hoursAgo)
+        {
+            return weather.Hourly.SurfacePressure[currentIdx - hoursAgo];
+        }
+
+        return null;
     }
 }

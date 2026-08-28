@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Text.Json;
@@ -17,42 +16,56 @@ public class WeatherService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "ArmprodWeatherApp/1.0");
     }
 
-    // Loads the current weather forecast for the specified coordinates.
+    // Loads Weather and Air values in written coordinates
     public async Task<WeatherResponse?> GetWeatherAsync(double lat, double lon)
     {
         string latStr = lat.ToString(CultureInfo.InvariantCulture);
         string lonStr = lon.ToString(CultureInfo.InvariantCulture);
 
-    string url = $"https://api.open-meteo.com/v1/forecast?" +
-             $"latitude={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
-             $"longitude={lon.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
-             $"current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,surface_pressure,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m,cloud_cover,visibility&" +
-             $"hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,uv_index&" +
-             $"daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum,daylight_duration,sunshine_duration&" +
-             $"timezone=auto";
+        // URL for Main Weather API
+        string weatherUrl = $"https://api.open-meteo.com/v1/forecast?" +
+                    $"latitude={latStr}&" +
+                    $"longitude={lonStr}&" +
+                    $"current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,visibility,dew_point_2m&" +
+                    $"hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,uv_index,surface_pressure&" +
+                    $"daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_probability_max,precipitation_sum,moonrise,moonset,moon_phase&" +
+                    $"timezone=auto";
 
-        var response = await _httpClient.GetAsync(url);
-        response.EnsureSuccessStatusCode();
+        // URL for Air Quality API
+        string airQualityUrl = $"https://air-quality-api.open-meteo.com/v1/air-quality?" +
+                               $"latitude={latStr}&" +
+                               $"longitude={lonStr}&" +
+                               $"current=us_aqi,pm2_5,pm10";
 
-        var json = await response.Content.ReadAsStringAsync();
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        return JsonSerializer.Deserialize<WeatherResponse>(json, options);
-    }
+        try
+        {
+            var weatherTask = _httpClient.GetAsync(weatherUrl);
+            var airQualityTask = _httpClient.GetAsync(airQualityUrl);
 
-    // It searches for towns by name, taking into account the selected API language.
-    public async Task<GeocodingResponse?> SearchLocationsAsync(string query, string langCode = "cs")
-    {
-        if (string.IsNullOrWhiteSpace(query)) return null;
+            await Task.WhenAll(weatherTask, airQualityTask);
 
-        string url = $"https://geocoding-api.open-meteo.com/v1/search?name={Uri.EscapeDataString(query)}&count=5&language={langCode}&format=json";
+            var weatherResp = await weatherTask;
+            var airQualityResp = await airQualityTask;
 
-        var response = await _httpClient.GetAsync(url);
-        response.EnsureSuccessStatusCode();
+            weatherResp.EnsureSuccessStatusCode();
 
-        var json = await response.Content.ReadAsStringAsync();
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var weatherJson = await weatherResp.Content.ReadAsStringAsync();
+            var weatherResult = JsonSerializer.Deserialize<WeatherResponse>(weatherJson, options);
 
-        return JsonSerializer.Deserialize<GeocodingResponse>(json, options);
+            if (weatherResult != null && airQualityResp.IsSuccessStatusCode)
+            {
+                var aqJson = await airQualityResp.Content.ReadAsStringAsync();
+                var aqResult = JsonSerializer.Deserialize<AirQualityResponse>(aqJson, options);
+                weatherResult.AirQuality = aqResult?.Current;
+            }
+
+            return weatherResult;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }
