@@ -66,13 +66,11 @@ public partial class MainViewModel
     {
         var current = weather.Current!;
 
-        if (current.Time is { } timeStr && DateTime.TryParse(timeStr, out var localDt))
-        {
-            string dayName = localDt.ToString("ddd", culture);
-            if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
-            LocalTimeText = $"{dayName} {localDt:HH:mm}";
-        }
-        else LocalTimeText = "--:--";
+        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
+        string dayName = cityNow.ToString("ddd", culture);
+        if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
+        
+        LocalTimeText = $"{dayName} {cityNow:HH:mm}";
 
         bool isDay = current.IsDay == 1;
         WeatherCondition = WeatherMapper.MapCodeToCondition(current.WeatherCode, language);
@@ -164,14 +162,28 @@ public partial class MainViewModel
     {
         if (weather.Hourly?.Time == null) return;
 
+        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
+
+        int startIdx = 0;
+        for (int i = 0; i < weather.Hourly.Time.Count; i++)
+        {
+            if (DateTime.TryParse(weather.Hourly.Time[i], out var t) 
+                && t.Date == cityNow.Date 
+                && t.Hour == cityNow.Hour)
+            {
+                startIdx = i;
+                break;
+            }
+        }
+
         int maxRainProb = 0;
         string maxRainTime = "--:--";
         double maxUv = 0;
         string maxUvTime = "--:--";
 
-        int limit = Math.Min(24, weather.Hourly.Time.Count);
+        int limit = Math.Min(startIdx + 24, weather.Hourly.Time.Count);
 
-        for (int i = 0; i < limit; i++)
+        for (int i = startIdx; i < limit; i++)
         {
             if (weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i)
             {
@@ -203,9 +215,7 @@ public partial class MainViewModel
 
         int availableCount = Math.Min(weather.Hourly.Time.Count, Math.Min(weather.Hourly.WeatherCode.Count, weather.Hourly.Temperature.Count));
 
-        DateTime cityNow = DateTime.TryParse(weather.Current?.Time, out var parsedCurrent) 
-        ? parsedCurrent 
-        : DateTime.Now;
+        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
 
         int startIdx = 0;
         for (int i = 0; i < availableCount; i++)
@@ -279,9 +289,7 @@ public partial class MainViewModel
     {
         if (weather.Hourly?.SurfacePressure == null || weather.Hourly.Time == null) return null;
 
-        DateTime cityNow = DateTime.TryParse(weather.Current?.Time, out var parsedCurrent) 
-            ? parsedCurrent 
-            : DateTime.Now;
+        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
 
         int currentIdx = weather.Hourly.Time.FindIndex(t => 
             DateTime.TryParse(t, out var dt) && dt.Hour == cityNow.Hour && dt.Date == cityNow.Date);

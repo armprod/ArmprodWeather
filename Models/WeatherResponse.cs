@@ -16,6 +16,9 @@ public class WeatherResponse
 
     [JsonPropertyName("air_quality")]
     public AirQualityCurrentData? AirQuality { get; set; }
+
+    [JsonPropertyName("utc_offset_seconds")]
+    public int UtcOffsetSeconds { get; set; }
 }
 
 public class CurrentData
