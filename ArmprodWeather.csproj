@@ -7,7 +7,7 @@
 
     <RootNamespace>ArmprodWeather</RootNamespace>
     <AssemblyName>Armprod Weather</AssemblyName>
-    <ApplicationIcon><!-- --></ApplicationIcon>
+    <ApplicationIcon>Assets\ArmprodWeatherIcon.ico</ApplicationIcon>
 
     <!-- Informations about autors and company -->
     <Authors>Armprod</Authors>

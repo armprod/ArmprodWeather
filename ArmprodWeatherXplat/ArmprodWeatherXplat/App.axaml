@@ -1,0 +1,115 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ArmprodWeatherXplat"
+             x:Class="ArmprodWeatherXplat.App"
+             RequestedThemeVariant="Default">
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                
+                <!-- DARK THEME -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAAAAA"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
+                    <SolidColorBrush x:Key="FavoriteButtonBrush" Color="#3F3D46"/>
+                    <SolidColorBrush x:Key="FavoriteButtonHoverBrush" Color="#4F4C58"/>
+                    <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#33FFFFFF"/>
+                </ResourceDictionary>
+                
+                <!-- LIGHT THEME -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F4F6"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#E5E5EA"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1C1C1E"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6E6E73"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#E5E5EA"/>
+                    <SolidColorBrush x:Key="FavoriteButtonBrush" Color="#E5E5EA"/>
+                    <SolidColorBrush x:Key="FavoriteButtonHoverBrush" Color="#D1D1D6"/>
+                    <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#1E000000"/>
+                </ResourceDictionary>
+                
+                <!-- DEFAULT -->
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAAAAA"/>
+                    <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
+                    <SolidColorBrush x:Key="FavoriteButtonBrush" Color="#3F3D46"/>
+                    <SolidColorBrush x:Key="FavoriteButtonHoverBrush" Color="#4F4C58"/>
+                    <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#33FFFFFF"/>
+                </ResourceDictionary>
+                
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <Style Selector="Border.WeatherCard">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="MinHeight" Value="115"/>
+        </Style>
+
+        <Style Selector="TextBlock.CardHeader">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="TextBlock.CardValue">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="TextBlock.CardSubtext">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="Button.FavoriteCityButton">
+            <Setter Property="Background" Value="{DynamicResource FavoriteButtonBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="12,6"/>
+        </Style>
+
+        <Style Selector="Button.FavoriteCityButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource FavoriteButtonHoverBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+
+        <Style Selector="Button.IconButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <Style Selector="Button.IconButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource IconButtonHoverBrush}"/>
+        </Style>
+
+        <Style Selector="Button.IconButton:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBackgroundBrush}"/>
+        </Style>
+    </Application.Styles>
+</Application>

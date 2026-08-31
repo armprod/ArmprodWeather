@@ -13,3 +13,9 @@
 *.suo
 *.userosscache
 *.sln.docstates
+
+# Android / MonoAndroid
+*.apk
+*.aab
+.gradle/
+build/

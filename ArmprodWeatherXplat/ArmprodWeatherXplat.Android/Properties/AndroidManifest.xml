@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
+          package="com.armprod.weather.v2" 
+          android:installLocation="auto">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application 
+        android:label="Armprod Weather" 
+        android:icon="@drawable/icon"
+        android:roundIcon="@drawable/icon" />
+</manifest>

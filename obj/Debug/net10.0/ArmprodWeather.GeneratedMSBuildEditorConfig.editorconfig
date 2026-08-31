@@ -1,20 +1,4 @@
 is_global = true
-build_property.AvaloniaNameGeneratorIsEnabled = true
-build_property.AvaloniaNameGeneratorBehavior = InitializeComponent
-build_property.AvaloniaNameGeneratorDefaultFieldModifier = internal
-build_property.AvaloniaNameGeneratorFilterByPath = *
-build_property.AvaloniaNameGeneratorFilterByNamespace = *
-build_property.AvaloniaNameGeneratorViewFileNamingStrategy = NamespaceAndClassName
-build_property.AvaloniaNameGeneratorAttachDevTools = true
-build_property.AvaloniaUseCompiledBindingsByDefault = true
-build_property.AvaloniaMainPackageVersion = 12.1.0
-build_property.AvaloniaPreviewerNetCoreToolPath = C:\Users\knier\.nuget\packages\avalonia\12.1.0\buildTransitive\\..\tools\net8.0\designer\Avalonia.Designer.HostApp.dll
-build_property.AvaloniaResourcePaths = C:\Users\knier\Downloads\ArmprodWeather\Assets\avalonia-logo.ico,C:\Users\knier\Downloads\ArmprodWeather\App.axaml,C:\Users\knier\Downloads\ArmprodWeather\Views\MainWindow.axaml
-build_property.MvvmToolkitEnableINotifyPropertyChangingSupport = true
-build_property._MvvmToolkitIsUsingWindowsRuntimePack = false
-build_property.CsWinRTComponent = 
-build_property.CsWinRTAotOptimizerEnabled = 
-build_property.CsWinRTAotWarningLevel = 
 build_property.TargetFramework = net10.0
 build_property.TargetFrameworkIdentifier = .NETCoreApp
 build_property.TargetFrameworkVersion = v10.0
@@ -32,9 +16,3 @@ build_property.EnableComHosting =
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
-
-[C:/Users/knier/Downloads/ArmprodWeather/App.axaml]
-build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
-
-[C:/Users/knier/Downloads/ArmprodWeather/Views/MainWindow.axaml]
-build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

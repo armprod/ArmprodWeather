@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ArmprodWeather.ViewModels;
-using ArmprodWeather.Views;
+uusing ArmprodWeatherXplat.ViewModels;
+uusing ArmprodWeatherXplat.Views;
 
 namespace ArmprodWeather;
 

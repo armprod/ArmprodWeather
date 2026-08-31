@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="ArmprodWeatherXplat.Android/ArmprodWeatherXplat.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="ArmprodWeatherXplat.Browser/ArmprodWeatherXplat.Browser.csproj" />
+  <Project Path="ArmprodWeatherXplat.Desktop/ArmprodWeatherXplat.Desktop.csproj" />
+  <Project Path="ArmprodWeatherXplat.iOS/ArmprodWeatherXplat.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="ArmprodWeatherXplat/ArmprodWeatherXplat.csproj" />
+</Solution>
