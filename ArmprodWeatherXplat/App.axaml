@@ -1,7 +1,12 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ArmprodWeather.App"
+             xmlns:local="using:ArmprodWeatherXplat"
+             x:Class="ArmprodWeatherXplat.App"
              RequestedThemeVariant="Default">
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
 
     <Application.Resources>
         <ResourceDictionary>
@@ -11,6 +16,7 @@
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="CardHoverBackgroundBrush" Color="#36343B"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAAAAA"/>
                     <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
@@ -22,7 +28,8 @@
                 <!-- LIGHT THEME -->
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F4F6"/>
-                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#E5E5EA"/>
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+                    <SolidColorBrush x:Key="CardHoverBackgroundBrush" Color="#E5E5EA"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1C1C1E"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6E6E73"/>
                     <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#E5E5EA"/>
@@ -31,10 +38,11 @@
                     <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#1E000000"/>
                 </ResourceDictionary>
                 
-                <!-- DEFAULT -->
+                <!-- DEFAULT (Fallback for Dark) -->
                 <ResourceDictionary x:Key="Default">
                     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#1E1E1E"/>
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2930"/>
+                    <SolidColorBrush x:Key="CardHoverBackgroundBrush" Color="#36343B"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAAAAA"/>
                     <SolidColorBrush x:Key="SearchBackgroundBrush" Color="#2D2D30"/>
@@ -50,6 +58,7 @@
     <Application.Styles>
         <FluentTheme />
 
+        <!-- WEATHER CARD -->
         <Style Selector="Border.WeatherCard">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
             <Setter Property="CornerRadius" Value="16"/>
@@ -80,11 +89,28 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- SEARCH BAR -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource SearchBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SearchBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource TextSecondaryBrush}"/>
+        </Style>
+
+        <!-- FAVORITES BAR -->
         <Style Selector="Button.FavoriteCityButton">
             <Setter Property="Background" Value="{DynamicResource FavoriteButtonBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="CornerRadius" Value="16"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="12,8"/>
+        </Style>
+
+        <Style Selector="Button.FavoriteCityButton:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource FavoriteButtonHoverBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
 
         <Style Selector="Button.FavoriteCityButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -92,6 +118,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Style>
 
+        <!-- ICON BUTTONS -->
         <Style Selector="Button.IconButton">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -107,6 +134,33 @@
             <Setter Property="Background" Value="{DynamicResource CardHoverBackgroundBrush}"/>
         </Style>
 
-        
+        <!-- SETTING LISTBOXES -->
+        <Style Selector="ListBox.SegmentedListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <Style Selector="ListBox.SegmentedListBox ListBoxItem">
+            <Setter Property="Background" Value="{DynamicResource SearchBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="ListBox.SegmentedListBox ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource FavoriteButtonBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style Selector="ListBox.SegmentedListBox ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource FavoriteButtonHoverBrush}"/>
+        </Style>
+
     </Application.Styles>
 </Application>

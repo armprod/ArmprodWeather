@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:ArmprodWeatherXplat.Views"
+        xmlns:vm="using:ArmprodWeatherXplat.ViewModels"
+        x:Class="ArmprodWeatherXplat.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/ArmprodWeatherIcon.ico"
+        Title="Armprod Weather"
+        Width="400" Height="800"
+        Background="{DynamicResource AppBackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}">
+
+    <views:MainView />
+
+</Window>

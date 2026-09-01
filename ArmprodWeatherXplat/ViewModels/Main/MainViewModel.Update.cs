@@ -79,22 +79,22 @@ public partial class MainViewModel
         string dayName = cityNow.ToString("ddd", culture);
         if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
         
-        string timeFormatStr = WeatherPresentationMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: true);
+        string timeFormatStr = WeatherMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: true);
         LocalTimeText = $"{dayName} {cityNow.ToString(timeFormatStr, culture)}";
 
         bool isDay = current.IsDay == 1;
         WeatherCondition = WeatherMapper.MapCodeToCondition(current.WeatherCode, language);
         WeatherIcon = WeatherMapper.MapCodeToIcon(current.WeatherCode, isDay);
 
-        double currentTemp = WeatherPresentationMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
+        double currentTemp = WeatherMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
         CurrentTemperature = $"{Math.Round(currentTemp)}{tempUnit}";
 
         if (weather.Daily?.TempMax is { Count: > 0 } && weather.Daily?.TempMin is { Count: > 0 })
         {
             string highLabel = isCzech ? "V" : "H";
             string lowLabel = isCzech ? "N" : "L";
-            double maxTemp = WeatherPresentationMapper.ConvertTemp(weather.Daily.TempMax[0], Settings.SelectedTemperatureUnit);
-            double minTemp = WeatherPresentationMapper.ConvertTemp(weather.Daily.TempMin[0], Settings.SelectedTemperatureUnit);
+            double maxTemp = WeatherMapper.ConvertTemp(weather.Daily.TempMax[0], Settings.SelectedTemperatureUnit);
+            double minTemp = WeatherMapper.ConvertTemp(weather.Daily.TempMin[0], Settings.SelectedTemperatureUnit);
             TempRange = $"{highLabel}: {Math.Round(maxTemp)}{tempUnit}  |  {lowLabel}: {Math.Round(minTemp)}{tempUnit}";
         }
     }
@@ -147,23 +147,23 @@ public partial class MainViewModel
         var current = weather.Current!;
         var daily = weather.Daily;
 
-        double speed = WeatherPresentationMapper.ConvertWind(current.WindSpeed, Settings.SelectedWindSpeedUnit);
-        double gusts = WeatherPresentationMapper.ConvertWind(current.WindGusts, Settings.SelectedWindSpeedUnit);
+        double speed = WeatherMapper.ConvertWind(current.WindSpeed, Settings.SelectedWindSpeedUnit);
+        double gusts = WeatherMapper.ConvertWind(current.WindGusts, Settings.SelectedWindSpeedUnit);
         WindSpeed = $"{Math.Round(speed)} {windUnit}";
-        WindGustsText = WeatherPresentationMapper.FormatWindGusts(gusts, windUnit, isCzech);
+        WindGustsText = WeatherMapper.FormatWindGusts(gusts, windUnit, isCzech);
         WindDirectionText = WeatherMapper.MapWindDirection(current.WindDirection, language);
 
         Humidity = $"{current.Humidity} %";
-        DewPointText = WeatherPresentationMapper.FormatDewPoint(WeatherPresentationMapper.ConvertTemp(current.DewPoint, Settings.SelectedTemperatureUnit), tempUnit, isCzech);
+        DewPointText = WeatherMapper.FormatDewPoint(WeatherMapper.ConvertTemp(current.DewPoint, Settings.SelectedTemperatureUnit), tempUnit, isCzech);
 
-        double apparentTemp = WeatherPresentationMapper.ConvertTemp(current.ApparentTemperature, Settings.SelectedTemperatureUnit);
-        double currentTemp = WeatherPresentationMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
+        double apparentTemp = WeatherMapper.ConvertTemp(current.ApparentTemperature, Settings.SelectedTemperatureUnit);
+        double currentTemp = WeatherMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
         ApparentTempText = $"{Math.Round(apparentTemp)}{tempUnit}";
-        TempDeltaText = WeatherPresentationMapper.FormatTempDelta(currentTemp, apparentTemp, tempUnit, isCzech);
+        TempDeltaText = WeatherMapper.FormatTempDelta(currentTemp, apparentTemp, tempUnit, isCzech);
 
         double? pastPressure = GetPastPressure(weather, 3);
-        PressureText = WeatherPresentationMapper.FormatPressureWithTrend(current.SurfacePressure, pastPressure, isCzech);
-        PressureAdviceText = WeatherPresentationMapper.GetPressureAdvice(current.SurfacePressure, pastPressure, isCzech);
+        PressureText = WeatherMapper.FormatPressureWithTrend(current.SurfacePressure, pastPressure, isCzech);
+        PressureAdviceText = WeatherMapper.GetPressureAdvice(current.SurfacePressure, pastPressure, isCzech);
 
         if (daily?.UvIndexMax is { Count: > 0 })
         {
@@ -173,30 +173,30 @@ public partial class MainViewModel
         }
 
         PrecipProbText = daily?.PrecipitationProbabilityMax is { Count: > 0 } ? $"{daily.PrecipitationProbabilityMax[0]} %" : "-- %";
-        PrecipAmountText = daily?.PrecipitationSum is { Count: > 0 } ? WeatherPresentationMapper.FormatPrecipAmount(daily.PrecipitationSum[0], isCzech) : "--";
+        PrecipAmountText = daily?.PrecipitationSum is { Count: > 0 } ? WeatherMapper.FormatPrecipAmount(daily.PrecipitationSum[0], isCzech) : "--";
 
-        var (visValue, visDesc) = WeatherPresentationMapper.FormatVisibility(current.Visibility, windUnit, isCzech);
+        var (visValue, visDesc) = WeatherMapper.FormatVisibility(current.Visibility, windUnit, isCzech);
         VisibilityText = visValue;
         VisibilityAdviceText = visDesc;
 
-        var (cloudValue, cloudDesc) = WeatherPresentationMapper.FormatCloudCover(current.CloudCover, isCzech);
+        var (cloudValue, cloudDesc) = WeatherMapper.FormatCloudCover(current.CloudCover, isCzech);
         CloudCoverText = cloudValue;
         CloudCoverAdviceText = cloudDesc;
 
         SunriseText = daily?.Sunrise is { Count: > 0 } 
-            ? WeatherPresentationMapper.FormatTime(daily.Sunrise[0], timeFormat, isCzech) 
+            ? WeatherMapper.FormatTime(daily.Sunrise[0], timeFormat, isCzech) 
             : "--:--";
             
         SunsetText = daily?.Sunset is { Count: > 0 } 
-            ? WeatherPresentationMapper.FormatTime(daily.Sunset[0], timeFormat, isCzech) 
+            ? WeatherMapper.FormatTime(daily.Sunset[0], timeFormat, isCzech) 
             : "--:--";
 
-        DaylightDurationText = daily?.DaylightDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatDaylightDuration(daily.DaylightDuration[0], isCzech) : "--";
-        SunshineText = daily?.SunshineDuration is { Count: > 0 } ? WeatherPresentationMapper.FormatSunshineDuration(daily.SunshineDuration[0], isCzech) : "--";
+        DaylightDurationText = daily?.DaylightDuration is { Count: > 0 } ? WeatherMapper.FormatDaylightDuration(daily.DaylightDuration[0], isCzech) : "--";
+        SunshineText = daily?.SunshineDuration is { Count: > 0 } ? WeatherMapper.FormatSunshineDuration(daily.SunshineDuration[0], isCzech) : "--";
 
         if (weather.AirQuality != null)
         {
-            var (aqiValue, aqiDesc) = WeatherPresentationMapper.FormatAqi(weather.AirQuality.UsAqi, isCzech);
+            var (aqiValue, aqiDesc) = WeatherMapper.FormatAqi(weather.AirQuality.UsAqi, isCzech);
             AqiText = aqiValue;
             AqiAdviceText = aqiDesc;
         }
@@ -209,14 +209,14 @@ public partial class MainViewModel
         if (daily?.MoonPhase is { Count: > 0 })
         {
             string? moonrise = daily.Moonrise is { Count: > 0 } 
-                ? WeatherPresentationMapper.FormatTime(daily.Moonrise[0], timeFormat, isCzech) 
+                ? WeatherMapper.FormatTime(daily.Moonrise[0], timeFormat, isCzech) 
                 : null;
                 
             string? moonset = daily.Moonset is { Count: > 0 } 
-                ? WeatherPresentationMapper.FormatTime(daily.Moonset[0], timeFormat, isCzech) 
+                ? WeatherMapper.FormatTime(daily.Moonset[0], timeFormat, isCzech) 
                 : null;
 
-            var (moonPhaseName, moonTimes) = WeatherPresentationMapper.GetMoonPhaseInfo(daily.MoonPhase[0], moonrise, moonset, isCzech);
+            var (moonPhaseName, moonTimes) = WeatherMapper.GetMoonPhaseInfo(daily.MoonPhase[0], moonrise, moonset, isCzech);
             MoonPhaseText = moonPhaseName;
             MoonRiseSetText = moonTimes;
         }
@@ -268,8 +268,8 @@ public partial class MainViewModel
             }
         }
 
-        HourlyPeakPrecipText = WeatherPresentationMapper.FormatPeakPrecip(maxRainProb, maxRainTime, isCzech);
-        PeakUvTimeText = WeatherPresentationMapper.FormatPeakUv(maxUv, maxUvTime, isCzech);
+        HourlyPeakPrecipText = WeatherMapper.FormatPeakPrecip(maxRainProb, maxRainTime, isCzech);
+        PeakUvTimeText = WeatherMapper.FormatPeakUv(maxUv, maxUvTime, isCzech);
     }
 
     private void UpdateHourlyForecast(
@@ -297,7 +297,7 @@ public partial class MainViewModel
         }
 
         var culture = isCzech ? new System.Globalization.CultureInfo("cs-CZ") : new System.Globalization.CultureInfo("en-US");
-        string hourlyTimeFormat = WeatherPresentationMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: false);
+        string hourlyTimeFormat = WeatherMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: false);
 
         int maxItems = Math.Min(startIdx + 24, availableCount);
         for (int i = startIdx; i < maxItems; i++)
@@ -308,9 +308,9 @@ public partial class MainViewModel
                 ? (isCzech ? "Teď" : "Now") 
                 : dt.ToString(hourlyTimeFormat, culture);
 
-            double hourlyTemp = WeatherPresentationMapper.ConvertTemp(weather.Hourly.Temperature[i], Settings.SelectedTemperatureUnit);
+            double hourlyTemp = WeatherMapper.ConvertTemp(weather.Hourly.Temperature[i], Settings.SelectedTemperatureUnit);
             double hourlyApparent = weather.Hourly.ApparentTemperature != null && weather.Hourly.ApparentTemperature.Count > i
-                ? WeatherPresentationMapper.ConvertTemp(weather.Hourly.ApparentTemperature[i], Settings.SelectedTemperatureUnit)
+                ? WeatherMapper.ConvertTemp(weather.Hourly.ApparentTemperature[i], Settings.SelectedTemperatureUnit)
                 : hourlyTemp;
 
             int rainProb = weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i 
@@ -346,8 +346,8 @@ public partial class MainViewModel
             string dayName = (i == 0) ? (isCzech ? "Dnes" : "Today") : dt.ToString("ddd", culture);
             if (isCzech && dayName is { Length: > 0 }) dayName = char.ToUpper(dayName[0]) + dayName[1..];
 
-            double minDaily = WeatherPresentationMapper.ConvertTemp(weather.Daily.TempMin[i], Settings.SelectedTemperatureUnit);
-            double maxDaily = WeatherPresentationMapper.ConvertTemp(weather.Daily.TempMax[i], Settings.SelectedTemperatureUnit);
+            double minDaily = WeatherMapper.ConvertTemp(weather.Daily.TempMin[i], Settings.SelectedTemperatureUnit);
+            double maxDaily = WeatherMapper.ConvertTemp(weather.Daily.TempMax[i], Settings.SelectedTemperatureUnit);
 
             DailyForecast.Add(new DailyItem(
                 dayName, 

@@ -3,8 +3,70 @@ using ArmprodWeatherXplat.Services;
 
 namespace ArmprodWeatherXplat.Helpers;
 
-public static class WeatherPresentationMapper
+public static class WeatherMapper
 {
+    // ==========================================
+    // 1. KÓDY POČASÍ A TEXTY (z původního WeatherMapper)
+    // ==========================================
+
+    public static string MapCodeToIcon(int code, bool isDay = true) => code switch
+    {
+        0 => isDay ? "☀️" : "🌙",
+        1 or 2 => isDay ? "🌤️" : "🌙",
+        3 => "☁️",
+        45 or 48 => "🌫️",
+        51 or 53 or 55 or 61 or 63 or 65 => "🌧️",
+        71 or 73 or 75 => "❄️",
+        95 or 96 or 99 => "🌩️",
+        _ => "🌡️"
+    };
+
+    public static string MapCodeToCondition(int code, bool isCzech) => code switch
+    {
+        0 => isCzech ? "Jasno" : "Clear",
+        1 or 2 => isCzech ? "Skoro jasno" : "Almost clear",
+        3 => isCzech ? "Zataženo" : "Cloudy",
+        45 or 48 => isCzech ? "Mlha" : "Fog",
+        51 or 53 or 55 => isCzech ? "Mrholení" : "Drizzle",
+        61 or 63 or 65 => isCzech ? "Déšť" : "Rain",
+        71 or 73 or 75 => isCzech ? "Sněžení" : "Snowfall",
+        95 or 96 or 99 => isCzech ? "Bouřky" : "Thunderstorm",
+        _ => isCzech ? "Proměnlivo" : "Unpredictable weather"
+    };
+
+    public static string MapCodeToCondition(int code, string language) 
+        => MapCodeToCondition(code, language == "Czech");
+
+    public static string MapWindDirection(int degrees, bool isCzech)
+    {
+        string[] arrows = { "⬇️", "↙️", "⬅️", "↖️", "⬆️", "↗️", "➡️", "↘️" };
+        string[] directions = isCzech 
+            ? new[] { "S", "SV", "V", "JV", "J", "JZ", "Z", "SZ" }
+            : new[] { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
+
+        int index = (int)Math.Round((degrees % 360) / 45.0) % 8;
+        return $"{arrows[index]} {directions[index]} ({degrees}°)";
+    }
+
+    public static string MapWindDirection(int degrees, string language) 
+        => MapWindDirection(degrees, language == "Czech");
+
+    public static string GetUvRiskLevel(double uvIndex, bool isCzech) => uvIndex switch
+    {
+        < 3 => isCzech ? "Nízký" : "Low",
+        < 6 => isCzech ? "Střední" : "Moderate",
+        < 8 => isCzech ? "Vysoký" : "High",
+        < 11 => isCzech ? "Velmi vysoký" : "Very High",
+        _ => isCzech ? "Extrémní" : "Extreme"
+    };
+
+    public static string GetUvRiskLevel(double uvIndex, string language) 
+        => GetUvRiskLevel(uvIndex, language == "Czech");
+
+    // ==========================================
+    // 2. PREZENTAČNÍ A FORMÁTOVACÍ METODY
+    // ==========================================
+
     public static double ConvertTemp(double celsius, string unit) =>
         unit == "°F" ? (celsius * 1.8 + 32) : celsius;
 
@@ -93,7 +155,7 @@ public static class WeatherPresentationMapper
     public static (string Value, string Description) FormatVisibility(double visibilityMeters, string speedOrDistanceUnit, bool isCzech)
     {
         bool isImperial = speedOrDistanceUnit.Contains("mph", StringComparison.OrdinalIgnoreCase) || 
-                        speedOrDistanceUnit.Contains("mi", StringComparison.OrdinalIgnoreCase);
+                          speedOrDistanceUnit.Contains("mi", StringComparison.OrdinalIgnoreCase);
 
         double distance = isImperial ? visibilityMeters / 1609.34 : visibilityMeters / 1000.0;
         string unitSymbol = isImperial ? "mi" : "km";
@@ -146,7 +208,7 @@ public static class WeatherPresentationMapper
             ? $"↑ {moonrise}  ↓ {moonset}" 
             : "";
 
-        return ($"{icon} {name}", risesetText);
+        return ($"{name} {icon}", risesetText);
     }
 
     public static (string Value, string Description) FormatAqi(int aqiValue, bool isCzech)
@@ -161,18 +223,6 @@ public static class WeatherPresentationMapper
         else desc = isCzech ? "🟣 Velmi špatná" : "🟣 Very Unhealthy";
 
         return (valueStr, desc);
-    }
-
-    public static string FormatIsoTime(string? rawIsoTime)
-    {
-        if (string.IsNullOrEmpty(rawIsoTime)) return "--:--";
-
-        if (DateTime.TryParse(rawIsoTime, out var dt))
-        {
-            return dt.ToString("HH:mm");
-        }
-
-        return "--:--";
     }
 
     public static string GetTimeFormat(TimeFormatSetting setting, bool isCzech, bool includeMinutes = true)

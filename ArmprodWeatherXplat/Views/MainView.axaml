@@ -1,15 +1,15 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:ArmprodWeatherXplat.ViewModels"
-        xmlns:m="using:ArmprodWeatherXplat.Models"
-        xmlns:services="clr-namespace:ArmprodWeatherXplat.Services"
-        x:Class="ArmprodWeatherXplat.Views.MainWindow"
-        x:DataType="vm:MainViewModel"
-        Icon="/Assets/ArmprodWeatherIcon.ico"
-        Title="Armprod Weather"
-        Width="400" Height="800"
-        Background="{DynamicResource AppBackgroundBrush}"
-        Foreground="{DynamicResource TextPrimaryBrush}">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArmprodWeatherXplat.ViewModels"
+             xmlns:m="using:ArmprodWeatherXplat.Models"
+             xmlns:services="using:ArmprodWeatherXplat.Services"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             x:Class="ArmprodWeatherXplat.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             Background="{DynamicResource AppBackgroundBrush}"
+             Foreground="{DynamicResource TextPrimaryBrush}">
 
     <Panel>
         <Grid RowDefinitions="Auto,*" IsHitTestVisible="{Binding !IsLoading}">
@@ -66,7 +66,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="services:FavoriteLocation">
                                 <Button Classes="FavoriteCityButton" Content="{Binding Name}"
-                                        Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).Favorites.SelectFavoriteCommand}"
+                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).Favorites.SelectFavoriteCommand}"
                                         CommandParameter="{Binding}"
                                         CornerRadius="16" Padding="12,6"/>
                             </DataTemplate>
@@ -75,24 +75,97 @@
                 </ScrollViewer>
 
                 <!-- SETTINGS PANEL -->
-                <Border IsVisible="{Binding Settings.IsSettingsOpen}" CornerRadius="12" Padding="16" Background="{DynamicResource CardBackgroundBrush}">
-                    <StackPanel Spacing="10" Margin="15">
-                        <TextBlock Text="{Binding Settings.SettingsTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <TextBlock Text="{Binding Settings.ThemeLabel}"/>
-                        <ComboBox ItemsSource="{Binding Settings.AvailableThemes}" SelectedItem="{Binding Settings.SelectedTheme}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Text="{Binding Settings.LanguageLabel}"/>
-                        <ComboBox ItemsSource="{Binding Settings.AvailableLanguages}" SelectedItem="{Binding Settings.SelectedLanguage}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Text="{Binding Settings.TemperatureUnitLabel}"/>
-                        <ComboBox ItemsSource="{Binding Settings.AvailableTemperatureUnits}" SelectedItem="{Binding Settings.SelectedTemperatureUnit}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Text="{Binding Settings.WindSpeedUnitLabel}"/>
-                        <ComboBox ItemsSource="{Binding Settings.AvailableWindSpeedUnits}" SelectedItem="{Binding Settings.SelectedWindSpeedUnit}" HorizontalAlignment="Stretch"/>
-                        <TextBlock Text="{Binding Settings.TimeFormatLabel}"/>
-                        <ComboBox ItemsSource="{Binding Settings.AvailableTimeFormats}" SelectedItem="{Binding Settings.SelectedTimeFormat}" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
+                <Border IsVisible="{Binding Settings.IsSettingsOpen}" 
+                        CornerRadius="16" 
+                        Padding="16" 
+                        Margin="10"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        ZIndex="10">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="20">
+                            <!-- Header with Name -->
+                            <TextBlock Text="{Binding Settings.SettingsTitle}" 
+                                    FontSize="18" 
+                                    FontWeight="Bold" 
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    Margin="0,0,0,4"/>
+
+                            <!-- Themes -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Settings.ThemeLabel}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <ListBox Classes="SegmentedListBox"
+                                    ItemsSource="{Binding Settings.AvailableThemes}" 
+                                    SelectedItem="{Binding Settings.SelectedThemeDisplay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                 </ListBox>   
+                            </StackPanel>
+
+                            <!-- Languages -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Settings.LanguageLabel}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <ListBox Classes="SegmentedListBox"
+                                    ItemsSource="{Binding Settings.AvailableLanguages}" 
+                                    SelectedItem="{Binding Settings.SelectedLanguageDisplay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </StackPanel>
+
+                            <!-- Units of Temperature -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Settings.TemperatureUnitLabel}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <ListBox Classes="SegmentedListBox"
+                                    ItemsSource="{Binding Settings.AvailableTemperatureUnits}" 
+                                    SelectedItem="{Binding Settings.SelectedTemperatureUnitDisplay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </StackPanel>
+
+                            <!-- Units of Distance -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Settings.WindSpeedUnitLabel}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <ListBox Classes="SegmentedListBox"
+                                    ItemsSource="{Binding Settings.AvailableWindSpeedUnits}" 
+                                    SelectedItem="{Binding Settings.SelectedWindSpeedUnitDisplay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </StackPanel>
+
+                            <!-- Units of Time -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Settings.TimeFormatLabel}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <ListBox Classes="SegmentedListBox"
+                                    ItemsSource="{Binding Settings.AvailableTimeFormats}"
+                                    SelectedItem="{Binding Settings.SelectedTimeFormatDisplay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- SEARCH PANEL -->
-                <StackPanel IsVisible="{Binding Search.IsSearchOpen}" Spacing="8" PropertyChanged="SearchPanel_PropertyChanged">
+                <StackPanel IsVisible="{Binding Search.IsSearchOpen}" Spacing="8">
                     <TextBox x:Name="SearchInput"
                              Text="{Binding Search.SearchQuery}"
                              PlaceholderText="{Binding Search.SearchPlaceholder}"
@@ -327,4 +400,4 @@
         </Border>
 
     </Panel>
-</Window>
+</UserControl>
