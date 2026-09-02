@@ -1,11 +1,10 @@
-﻿<Solution>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Solution>
   <Project Path="ArmprodWeatherXplat.Android/ArmprodWeatherXplat.Android.csproj">
     <Deploy />
   </Project>
   <Project Path="ArmprodWeatherXplat.Browser/ArmprodWeatherXplat.Browser.csproj" />
   <Project Path="ArmprodWeatherXplat.Desktop/ArmprodWeatherXplat.Desktop.csproj" />
-  <Project Path="ArmprodWeatherXplat.iOS/ArmprodWeatherXplat.iOS.csproj">
-    <Deploy />
-  </Project>
+  <Project Path="ArmprodWeatherXplat.iOS/ArmprodWeatherXplat.iOS.csproj" Build="false" Deploy="false" />
   <Project Path="ArmprodWeatherXplat/ArmprodWeatherXplat.csproj" />
 </Solution>

@@ -4,16 +4,22 @@ using ArmprodWeatherXplat.Models;
 
 namespace ArmprodWeatherXplat.ViewModels;
 
-public record HourlyItem(
-    string Time,
-    string Icon,
-    string Temp,
-    string ApparentTemp,
-    string PrecipProb,
-    bool HasRain
-);
+public partial class HourlyItem : ObservableObject
+{
+    [ObservableProperty] private string _time = string.Empty;
+    [ObservableProperty] private string _icon = string.Empty;
+    [ObservableProperty] private string _temp = string.Empty;
+    [ObservableProperty] private string _apparentTemp = string.Empty;
+    [ObservableProperty] private string _precipProb = string.Empty;
+    [ObservableProperty] private bool _hasRain;
+}
 
-public record DailyItem(string Day, string Icon, string TempRange);
+public partial class DailyItem : ObservableObject
+{
+    [ObservableProperty] private string _day = string.Empty;
+    [ObservableProperty] private string _icon = string.Empty;
+    [ObservableProperty] private string _tempRange = string.Empty;
+}
 
 public partial class MainViewModel
 {

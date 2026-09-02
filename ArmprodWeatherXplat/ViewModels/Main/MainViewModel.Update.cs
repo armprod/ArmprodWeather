@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using ArmprodWeatherXplat.Helpers;
 using ArmprodWeatherXplat.Models;
 using ArmprodWeatherXplat.Services;
@@ -43,35 +43,93 @@ public partial class MainViewModel
         }
     }
 
-    private void UpdateUI(WeatherResponse? weather)
+    private void UpdateUI(WeatherResponse weather)
     {
-        if (weather?.Current == null) return;
-        _lastWeather = weather;
+        if (weather == null) return;
 
         string language = _localizationService.GetEffectiveLanguage(Settings.SelectedLanguage);
         bool isCzech = language == "Czech";
+        
         var culture = isCzech ? new CultureInfo("cs-CZ") : new CultureInfo("en-US");
+
         string tempUnit = Settings.GetEffectiveTemperatureUnit();
         string windUnit = Settings.GetEffectiveWindSpeedUnit();
+        var timeFormat = Settings.GetEffectiveTimeFormat();
 
-        var timeFormatSetting = Settings.SelectedTimeFormat; 
-
-        UpdateHeaderSection(weather, language, isCzech, culture, tempUnit, timeFormatSetting);
-
-        UpdateGridCards(weather, language, isCzech, tempUnit, windUnit, timeFormatSetting);
-
+        UpdateHeaderSection(weather, language, isCzech, culture, tempUnit, timeFormat);
+        UpdateGridCards(weather, language, isCzech, tempUnit, windUnit, timeFormat);
         AnalyzeHourlyPeaks(weather, isCzech);
-        UpdateHourlyForecast(weather, isCzech, tempUnit, timeFormatSetting);
-        UpdateDailyForecast(weather, isCzech, culture, tempUnit);
+
+        if (weather.Hourly?.Time != null)
+        {
+            var hourlyData = new List<(string Time, string Icon, string Temp, string ApparentTemp, string PrecipProb, bool HasRain)>();
+            int limit = Math.Min(weather.Hourly.Time.Count, 24);
+
+            for (int i = 0; i < limit; i++)
+            {
+                string rawTime = weather.Hourly.Time[i];
+                double temp = weather.Hourly.Temperature?[i] ?? 0;
+                double appTemp = weather.Hourly.ApparentTemperature?[i] ?? 0;
+                int precip = weather.Hourly.PrecipitationProbability?[i] ?? 0;
+                int weatherCode = weather.Hourly.WeatherCode?[i] ?? 0;
+                bool isDay = weather.Hourly.IsDay?[i] == 1;
+
+                string formattedTime = DateTime.TryParse(rawTime, out var dt)
+                    ? dt.ToString(WeatherMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: false), culture)
+                    : rawTime;
+
+                double convertedTemp = WeatherMapper.ConvertTemp(temp, Settings.SelectedTemperatureUnit);
+                double convertedAppTemp = WeatherMapper.ConvertTemp(appTemp, Settings.SelectedTemperatureUnit);
+
+                hourlyData.Add((
+                    Time: formattedTime,
+                    Icon: WeatherMapper.MapCodeToIcon(weatherCode, isDay),
+                    Temp: $"{Math.Round(convertedTemp)}{tempUnit}",
+                    ApparentTemp: $"{Math.Round(convertedAppTemp)}{tempUnit}",
+                    PrecipProb: $"{precip} %",
+                    HasRain: precip > 20
+                ));
+            }
+            UpdateHourlyForecastItems(hourlyData);
+        }
+
+        if (weather.Daily?.Time != null)
+        {
+            var dailyData = new List<(string Day, string Icon, string TempRange)>();
+            for (int i = 0; i < weather.Daily.Time.Count; i++)
+            {
+                string rawDate = weather.Daily.Time[i];
+                double max = weather.Daily.TempMax?[i] ?? 0;
+                double min = weather.Daily.TempMin?[i] ?? 0;
+                int weatherCode = weather.Daily.WeatherCode?[i] ?? 0;
+
+                string dayName = "--";
+                if (DateTime.TryParse(rawDate, out var dt))
+                {
+                    dayName = dt.ToString("ddd d.M.", culture);
+                    if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
+                }
+
+                double convertedMax = WeatherMapper.ConvertTemp(max, Settings.SelectedTemperatureUnit);
+                double convertedMin = WeatherMapper.ConvertTemp(min, Settings.SelectedTemperatureUnit);
+
+                dailyData.Add((
+                    Day: dayName,
+                    Icon: WeatherMapper.MapCodeToIcon(weatherCode, isDay: true),
+                    TempRange: $"{Math.Round(convertedMax)}{tempUnit} / {Math.Round(convertedMin)}{tempUnit}"
+                ));
+            }
+            UpdateDailyForecastItems(dailyData);
+        }
     }
 
     private void UpdateHeaderSection(
-    WeatherResponse weather, 
-    string language, 
-    bool isCzech, 
-    CultureInfo culture, 
-    string tempUnit, 
-    TimeFormatSetting timeFormat)
+        WeatherResponse weather, 
+        string language, 
+        bool isCzech, 
+        CultureInfo culture, 
+        string tempUnit, 
+        TimeFormatSetting timeFormat)
     {
         var current = weather.Current!;
 
@@ -137,12 +195,12 @@ public partial class MainViewModel
     }
 
     private void UpdateGridCards(
-    WeatherResponse weather, 
-    string language, 
-    bool isCzech, 
-    string tempUnit, 
-    string windUnit, 
-    TimeFormatSetting timeFormat)
+        WeatherResponse weather, 
+        string language, 
+        bool isCzech, 
+        string tempUnit, 
+        string windUnit, 
+        TimeFormatSetting timeFormat)
     {
         var current = weather.Current!;
         var daily = weather.Daily;
@@ -272,88 +330,50 @@ public partial class MainViewModel
         PeakUvTimeText = WeatherMapper.FormatPeakUv(maxUv, maxUvTime, isCzech);
     }
 
-    private void UpdateHourlyForecast(
-    WeatherResponse weather, 
-    bool isCzech, 
-    string tempUnit, 
-    TimeFormatSetting timeFormat)
+    private void UpdateHourlyForecastItems(List<(string Time, string Icon, string Temp, string ApparentTemp, string PrecipProb, bool HasRain)> newData)
     {
-        HourlyForecast.Clear();
-        if (weather.Hourly?.Time == null || weather.Hourly.WeatherCode == null || weather.Hourly.Temperature == null) return;
-
-        int availableCount = Math.Min(weather.Hourly.Time.Count, Math.Min(weather.Hourly.WeatherCode.Count, weather.Hourly.Temperature.Count));
-        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
-
-        int startIdx = 0;
-        for (int i = 0; i < availableCount; i++)
+        while (HourlyForecast.Count < newData.Count)
         {
-            if (DateTime.TryParse(weather.Hourly.Time[i], out var t) 
-                && t.Date == cityNow.Date 
-                && t.Hour == cityNow.Hour)
-            {
-                startIdx = i;
-                break;
-            }
+            HourlyForecast.Add(new HourlyItem());
+        }
+        while (HourlyForecast.Count > newData.Count)
+        {
+            HourlyForecast.RemoveAt(HourlyForecast.Count - 1);
         }
 
-        var culture = isCzech ? new System.Globalization.CultureInfo("cs-CZ") : new System.Globalization.CultureInfo("en-US");
-        string hourlyTimeFormat = WeatherMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: false);
-
-        int maxItems = Math.Min(startIdx + 24, availableCount);
-        for (int i = startIdx; i < maxItems; i++)
+        for (int i = 0; i < newData.Count; i++)
         {
-            if (!DateTime.TryParse(weather.Hourly.Time[i], out var dt)) continue;
+            var item = HourlyForecast[i];
+            var data = newData[i];
 
-            string timeLabel = (i == startIdx) 
-                ? (isCzech ? "Teď" : "Now") 
-                : dt.ToString(hourlyTimeFormat, culture);
-
-            double hourlyTemp = WeatherMapper.ConvertTemp(weather.Hourly.Temperature[i], Settings.SelectedTemperatureUnit);
-            double hourlyApparent = weather.Hourly.ApparentTemperature != null && weather.Hourly.ApparentTemperature.Count > i
-                ? WeatherMapper.ConvertTemp(weather.Hourly.ApparentTemperature[i], Settings.SelectedTemperatureUnit)
-                : hourlyTemp;
-
-            int rainProb = weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i 
-                ? weather.Hourly.PrecipitationProbability[i] 
-                : 0;
-
-            bool isHourlyDaytime = weather.Hourly.IsDay != null && weather.Hourly.IsDay.Count > i 
-                ? weather.Hourly.IsDay[i] == 1 
-                : (dt.Hour >= 6 && dt.Hour < 20);
-
-            HourlyForecast.Add(new HourlyItem(
-                timeLabel, 
-                WeatherMapper.MapCodeToIcon(weather.Hourly.WeatherCode[i], isHourlyDaytime),
-                $"{Math.Round(hourlyTemp)}{tempUnit}",
-                $"{Math.Round(hourlyApparent)}{tempUnit}",
-                $"{rainProb} %",
-                rainProb > 15
-            ));
+            item.Time = data.Time;
+            item.Icon = data.Icon;
+            item.Temp = data.Temp;
+            item.ApparentTemp = data.ApparentTemp;
+            item.PrecipProb = data.PrecipProb;
+            item.HasRain = data.HasRain;
         }
     }
 
-    private void UpdateDailyForecast(WeatherResponse weather, bool isCzech, CultureInfo culture, string tempUnit)
+    private void UpdateDailyForecastItems(List<(string Day, string Icon, string TempRange)> newData)
     {
-        DailyForecast.Clear();
-        if (weather.Daily?.Time == null || weather.Daily.WeatherCode == null || weather.Daily.TempMin == null || weather.Daily.TempMax == null) return;
-
-        int availableCount = Math.Min(weather.Daily.Time.Count, Math.Min(weather.Daily.WeatherCode.Count, Math.Min(weather.Daily.TempMin.Count, weather.Daily.TempMax.Count)));
-
-        for (int i = 0; i < availableCount; i++)
+        while (DailyForecast.Count < newData.Count)
         {
-            if (!DateTime.TryParse(weather.Daily.Time[i], out var dt)) continue;
+            DailyForecast.Add(new DailyItem());
+        }
+        while (DailyForecast.Count > newData.Count)
+        {
+            DailyForecast.RemoveAt(DailyForecast.Count - 1);
+        }
 
-            string dayName = (i == 0) ? (isCzech ? "Dnes" : "Today") : dt.ToString("ddd", culture);
-            if (isCzech && dayName is { Length: > 0 }) dayName = char.ToUpper(dayName[0]) + dayName[1..];
+        for (int i = 0; i < newData.Count; i++)
+        {
+            var item = DailyForecast[i];
+            var data = newData[i];
 
-            double minDaily = WeatherMapper.ConvertTemp(weather.Daily.TempMin[i], Settings.SelectedTemperatureUnit);
-            double maxDaily = WeatherMapper.ConvertTemp(weather.Daily.TempMax[i], Settings.SelectedTemperatureUnit);
-
-            DailyForecast.Add(new DailyItem(
-                dayName, 
-                WeatherMapper.MapCodeToIcon(weather.Daily.WeatherCode[i], true),
-                $"{Math.Round(minDaily)}{tempUnit} / {Math.Round(maxDaily)}{tempUnit}"
-            ));
+            item.Day = data.Day;
+            item.Icon = data.Icon;
+            item.TempRange = data.TempRange;
         }
     }
 

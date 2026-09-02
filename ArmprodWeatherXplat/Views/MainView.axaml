@@ -185,188 +185,190 @@
             </StackPanel>
 
             <!-- MAIN SCROLL CONTENT -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
-                <StackPanel Margin="20,0,20,20" Spacing="20">
-                    
-                    <!-- HERO SECTOR -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="8" Margin="0,10,0,10">
-                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="🕒" FontSize="12" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding LocalTimeHeader}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding LocalTimeText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <RefreshContainer Grid.Row="1" RefreshRequested="OnRefreshRequested">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                    <StackPanel Margin="20,0,20,20" Spacing="20">
+                        
+                        <!-- HERO SECTOR -->
+                        <StackPanel HorizontalAlignment="Center" Spacing="8" Margin="0,10,0,10">
+                            <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="🕒" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding LocalTimeHeader}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding LocalTimeText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Width="120" Height="120" Background="{DynamicResource CardBackgroundBrush}" CornerRadius="60" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding WeatherIcon}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <TextBlock Text="{Binding CurrentTemperature}" FontSize="72" FontWeight="Thin" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding WeatherCondition}" FontSize="20" Opacity="0.9" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding TempRange}" FontSize="14" Opacity="0.6" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- HOURLY FORECAST -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{Binding HourlyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                                    <ItemsControl ItemsSource="{Binding HourlyForecast}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="20"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:HourlyItem">
+                                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding Time}" FontSize="12" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Temp}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </StackPanel>
                         </Border>
 
-                        <Border Width="120" Height="120" Background="{DynamicResource CardBackgroundBrush}" CornerRadius="60" HorizontalAlignment="Center">
-                            <TextBlock Text="{Binding WeatherIcon}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-
-                        <TextBlock Text="{Binding CurrentTemperature}" FontSize="72" FontWeight="Thin" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding WeatherCondition}" FontSize="20" Opacity="0.9" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TempRange}" FontSize="14" Opacity="0.6" HorizontalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- HOURLY FORECAST -->
-                    <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="{Binding HourlyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
-                            <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding HourlyForecast}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="20"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
+                        <!-- WEEKLY FORECAST -->
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding DailyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
+                                <ItemsControl ItemsSource="{Binding DailyForecast}">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:HourlyItem">
-                                            <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding Time}" FontSize="12" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="{Binding Temp}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                        <DataTemplate x:DataType="vm:DailyItem">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
+                                                <TextBlock Text="{Binding Day}" FontSize="14"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Icon}" Margin="0,0,20,0"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding TempRange}" FontWeight="Bold"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </ScrollViewer>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- WEEKLY FORECAST -->
-                    <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="20" Padding="15">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="{Binding DailyForecastHeader}" FontSize="14" FontWeight="SemiBold" Opacity="0.7"/>
-                            <ItemsControl ItemsSource="{Binding DailyForecast}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:DailyItem">
-                                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
-                                            <TextBlock Text="{Binding Day}" FontSize="14"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Icon}" Margin="0,0,20,0"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding TempRange}" FontWeight="Bold"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- DETAIL GRID -->
-                    <UniformGrid Columns="2">
-                        <!-- Wind Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding WindHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding WindSpeed}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding WindDirectionText}" Classes="CardSubtext"/>
-                                <TextBlock Text="{Binding WindGustsText}" Classes="CardSubtext"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Humidity Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding HumidityHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding Humidity}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding DewPointText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                        <!-- DETAIL GRID -->
+                        <UniformGrid Columns="2">
+                            <!-- Wind Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding WindHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding WindSpeed}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding WindDirectionText}" Classes="CardSubtext"/>
+                                    <TextBlock Text="{Binding WindGustsText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Apparent Temperature Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding ApparentTempHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding ApparentTempText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding TempDeltaText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Humidity Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding HumidityHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding Humidity}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding DewPointText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Air Pressure & Trend Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding PressureHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding PressureText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding PressureAdviceText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Apparent Temperature Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding ApparentTempHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding ApparentTempText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding TempDeltaText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- UV Index Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding UvIndexHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding UvIndexText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding UvRiskText}" Classes="CardSubtext"/>
-                                <TextBlock Text="{Binding PeakUvTimeText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Air Pressure & Trend Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding PressureHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding PressureText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding PressureAdviceText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Precipitation Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding PrecipProbHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding PrecipProbText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding PrecipAmountText}" Classes="CardSubtext"/>
-                                <TextBlock Text="{Binding HourlyPeakPrecipText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- UV Index Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding UvIndexHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding UvIndexText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding UvRiskText}" Classes="CardSubtext"/>
+                                    <TextBlock Text="{Binding PeakUvTimeText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Visibility Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding VisibilityHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding VisibilityText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding VisibilityAdviceText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Precipitation Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding PrecipProbHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding PrecipProbText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding PrecipAmountText}" Classes="CardSubtext"/>
+                                    <TextBlock Text="{Binding HourlyPeakPrecipText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Cloud Cover Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding CloudCoverHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding CloudCoverText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding CloudCoverAdviceText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Visibility Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding VisibilityHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding VisibilityText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding VisibilityAdviceText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Sunrise Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding SunriseHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding SunriseText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding DaylightDurationText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Cloud Cover Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding CloudCoverHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding CloudCoverText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding CloudCoverAdviceText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Sunset Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding SunsetHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding SunsetText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding SunshineText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
-                        
-                        <!-- AQI Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding AqiHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding AqiText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding AqiAdviceText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Sunrise Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding SunriseHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding SunriseText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding DaylightDurationText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                        <!-- Moon Phase Card -->
-                        <Border Classes="WeatherCard">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding MoonHeader}" Classes="CardHeader"/>
-                                <TextBlock Text="{Binding MoonPhaseText}" Classes="CardValue"/>
-                                <TextBlock Text="{Binding MoonRiseSetText}" Classes="CardSubtext"/>
-                            </StackPanel>
-                        </Border>
+                            <!-- Sunset Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding SunsetHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding SunsetText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding SunshineText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- AQI Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding AqiHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding AqiText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding AqiAdviceText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                    </UniformGrid>
+                            <!-- Moon Phase Card -->
+                            <Border Classes="WeatherCard">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding MoonHeader}" Classes="CardHeader"/>
+                                    <TextBlock Text="{Binding MoonPhaseText}" Classes="CardValue"/>
+                                    <TextBlock Text="{Binding MoonRiseSetText}" Classes="CardSubtext"/>
+                                </StackPanel>
+                            </Border>
 
-                </StackPanel>
-            </ScrollViewer>
+                        </UniformGrid>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </RefreshContainer>
         </Grid>
         
         <!-- LOADING INDICATOR -->

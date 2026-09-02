@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using ArmprodWeatherXplat.Services;
 using Avalonia;
 using Avalonia.Styling;
+using Avalonia.Threading;
 
 namespace ArmprodWeatherXplat.ViewModels;
 
@@ -25,21 +26,19 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] private bool _isSettingsOpen = false;
 
-    // Interní/Kanovnické hodnoty pro ukládání a logiku
     [ObservableProperty] private string _selectedTheme = "System";
     [ObservableProperty] private string _selectedLanguage = "System";
     [ObservableProperty] private string _selectedTemperatureUnit = "System";
     [ObservableProperty] private string _selectedWindSpeedUnit = "System";
     [ObservableProperty] private TimeFormatSetting _selectedTimeFormat = TimeFormatSetting.System;
 
-    // Zobrazované lokalizované texty pro UI vazby v ListBoxech
     [ObservableProperty] private string _selectedThemeDisplay = "System";
     [ObservableProperty] private string _selectedLanguageDisplay = "System";
     [ObservableProperty] private string _selectedTemperatureUnitDisplay = "System";
     [ObservableProperty] private string _selectedWindSpeedUnitDisplay = "System";
     [ObservableProperty] private string _selectedTimeFormatDisplay = "System";
 
-    // Lokalizované popisky sekcí
+    // Sections Marks
     [ObservableProperty] private string _settingsTitle = "Settings";
     [ObservableProperty] private string _themeLabel = "Theme";
     [ObservableProperty] private string _languageLabel = "Language";
@@ -47,7 +46,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _windSpeedUnitLabel = "Wind Speed Units";
     [ObservableProperty] private string _timeFormatLabel = "Time Format";
 
-    // Kolekce pro UI
+    // UI Collections
     public ObservableCollection<string> AvailableThemes { get; } = new();
     public ObservableCollection<string> AvailableLanguages { get; } = new();
     public ObservableCollection<string> AvailableTemperatureUnits { get; } = new();
@@ -76,41 +75,46 @@ public partial class SettingsViewModel : ViewModelBase
         IsSettingsOpen = !IsSettingsOpen;
     }
 
-    partial void OnSelectedThemeDisplayChanged(string value)
+  partial void OnSelectedThemeDisplayChanged(string value)
     {
-        if (_isUpdatingLocalization || string.IsNullOrEmpty(value)) return;
+        if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
 
-        SelectedTheme = value switch
+        var newTheme = value switch
         {
             "Tmavý" or "Dark" => "Dark",
             "Světlý" or "Light" => "Light",
             _ => "System"
         };
 
-        ApplyTheme(SelectedTheme);
+        if (SelectedTheme == newTheme) return;
+
+        SelectedTheme = newTheme;
         SaveCurrentSettings();
+        ApplyTheme(SelectedTheme);
     }
 
-    partial void OnSelectedLanguageDisplayChanged(string value)
+    public static void ApplyTheme(string theme)
     {
-        if (_isUpdatingLocalization || string.IsNullOrEmpty(value)) return;
+        if (Application.Current is null) return;
 
-        SelectedLanguage = value switch
+        var targetVariant = theme switch
         {
-            "Čeština" or "Czech" => "Czech",
-            "Angličtina" or "English" => "English",
-            _ => "System"
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
         };
 
-        SaveCurrentSettings();
-        _localizationService.ApplyLanguageCulture(SelectedLanguage);
-        UpdateLocalizedTexts();
-        LanguageChanged?.Invoke(SelectedLanguage);
+        if (Application.Current.RequestedThemeVariant == targetVariant) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            Application.Current.RequestedThemeVariant = targetVariant;
+        }, DispatcherPriority.Background);
     }
 
     partial void OnSelectedTemperatureUnitDisplayChanged(string value)
     {
-        if (_isUpdatingLocalization || string.IsNullOrEmpty(value)) return;
+        if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
 
         SelectedTemperatureUnit = value switch
         {
@@ -120,12 +124,12 @@ public partial class SettingsViewModel : ViewModelBase
         };
 
         SaveCurrentSettings();
-        UnitsChanged?.Invoke();
+        Dispatcher.UIThread.Post(() => UnitsChanged?.Invoke());
     }
 
     partial void OnSelectedWindSpeedUnitDisplayChanged(string value)
     {
-        if (_isUpdatingLocalization || string.IsNullOrEmpty(value)) return;
+        if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
 
         SelectedWindSpeedUnit = value switch
         {
@@ -135,12 +139,12 @@ public partial class SettingsViewModel : ViewModelBase
         };
 
         SaveCurrentSettings();
-        UnitsChanged?.Invoke();
+        Dispatcher.UIThread.Post(() => UnitsChanged?.Invoke());
     }
 
     partial void OnSelectedTimeFormatDisplayChanged(string value)
     {
-        if (_isUpdatingLocalization || string.IsNullOrEmpty(value)) return;
+        if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
 
         if (value.Contains("24"))
             SelectedTimeFormat = TimeFormatSetting.TwentyFourHour;
@@ -150,7 +154,7 @@ public partial class SettingsViewModel : ViewModelBase
             SelectedTimeFormat = TimeFormatSetting.System;
 
         SaveCurrentSettings();
-        UnitsChanged?.Invoke();
+        Dispatcher.UIThread.Post(() => UnitsChanged?.Invoke());
     }
 
     public string GetEffectiveTemperatureUnit()
@@ -190,15 +194,38 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    partial void OnSelectedLanguageDisplayChanged(string value)
+    {
+        if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
+
+        var newLanguage = value switch
+        {
+            "Čeština" or "Czech" => "Czech",
+            "Angličtina" or "English" => "English",
+            _ => "System"
+        };
+
+        if (SelectedLanguage == newLanguage) return;
+
+        SelectedLanguage = newLanguage;
+        SaveCurrentSettings();
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            _localizationService.ApplyLanguageCulture(SelectedLanguage);
+            UpdateLocalizedTexts();
+            LanguageChanged?.Invoke(SelectedLanguage);
+        }, DispatcherPriority.Background);
+    }
+
     public void UpdateLocalizedTexts()
     {
         _isUpdatingLocalization = true;
-
         try
         {
             bool isCzech = _localizationService.GetEffectiveLanguage(SelectedLanguage) == "Czech";
 
-            // Texty nadpisů
+            // Labels
             SettingsTitle = isCzech ? "Nastavení" : "Settings";
             ThemeLabel = isCzech ? "Motiv aplikace" : "App Theme";
             LanguageLabel = isCzech ? "Jazyk" : "Language";
@@ -206,67 +233,19 @@ public partial class SettingsViewModel : ViewModelBase
             WindSpeedUnitLabel = isCzech ? "Jednotky rychlosti větru" : "Wind Speed Units";
             TimeFormatLabel = isCzech ? "Formát času" : "Time Format";
 
-            // Naplnění kolekcí
-            AvailableThemes.Clear();
-            AvailableThemes.Add(isCzech ? "Systém" : "System");
-            AvailableThemes.Add(isCzech ? "Tmavý" : "Dark");
-            AvailableThemes.Add(isCzech ? "Světlý" : "Light");
+            // Collections
+            UpdateCollection(AvailableThemes, new[] { isCzech ? "Systém" : "System", isCzech ? "Tmavý" : "Dark", isCzech ? "Světlý" : "Light" });
+            UpdateCollection(AvailableLanguages, new[] { isCzech ? "Systém" : "System", isCzech ? "Angličtina" : "English", isCzech ? "Čeština" : "Czech" });
+            UpdateCollection(AvailableTemperatureUnits, new[] { isCzech ? "Systém" : "System", "°C", "°F" });
+            UpdateCollection(AvailableWindSpeedUnits, new[] { isCzech ? "Systém" : "System", "km/h", "mph" });
+            UpdateCollection(AvailableTimeFormats, new[] { isCzech ? "Systém" : "System", isCzech ? "24-hod" : "24-hour", isCzech ? "12-hod" : "12-hour" });
 
-            AvailableLanguages.Clear();
-            AvailableLanguages.Add(isCzech ? "Systém" : "System");
-            AvailableLanguages.Add(isCzech ? "Angličtina" : "English");
-            AvailableLanguages.Add(isCzech ? "Čeština" : "Czech");
-
-            AvailableTemperatureUnits.Clear();
-            AvailableTemperatureUnits.Add(isCzech ? "Systém" : "System");
-            AvailableTemperatureUnits.Add("°C");
-            AvailableTemperatureUnits.Add("°F");
-
-            AvailableWindSpeedUnits.Clear();
-            AvailableWindSpeedUnits.Add(isCzech ? "Systém" : "System");
-            AvailableWindSpeedUnits.Add("km/h");
-            AvailableWindSpeedUnits.Add("mph");
-
-            AvailableTimeFormats.Clear();
-            AvailableTimeFormats.Add(isCzech ? "Systém" : "System");
-            AvailableTimeFormats.Add(isCzech ? "24-hod" : "24-hour");
-            AvailableTimeFormats.Add(isCzech ? "12-hod" : "12-hour");
-
-            // Obnova vybraných hodnot až PO naplnění kolekcí
-            SelectedThemeDisplay = SelectedTheme switch
-            {
-                "Dark" => isCzech ? "Tmavý" : "Dark",
-                "Light" => isCzech ? "Světlý" : "Light",
-                _ => isCzech ? "Systém" : "System"
-            };
-
-            SelectedLanguageDisplay = SelectedLanguage switch
-            {
-                "Czech" => isCzech ? "Čeština" : "Czech",
-                "English" => isCzech ? "Angličtina" : "English",
-                _ => isCzech ? "Systém" : "System"
-            };
-
-            SelectedTemperatureUnitDisplay = SelectedTemperatureUnit switch
-            {
-                "°C" => "°C",
-                "°F" => "°F",
-                _ => isCzech ? "Systém" : "System"
-            };
-
-            SelectedWindSpeedUnitDisplay = SelectedWindSpeedUnit switch
-            {
-                "km/h" => "km/h",
-                "mph" => "mph",
-                _ => isCzech ? "Systém" : "System"
-            };
-
-            SelectedTimeFormatDisplay = SelectedTimeFormat switch
-            {
-                TimeFormatSetting.TwentyFourHour => isCzech ? "24-hod" : "24-hour",
-                TimeFormatSetting.TwelveHour => isCzech ? "12-hod" : "12-hour",
-                _ => isCzech ? "Systém" : "System"
-            };
+            // Refresh Displayed Text
+            SelectedThemeDisplay = SelectedTheme switch { "Dark" => isCzech ? "Tmavý" : "Dark", "Light" => isCzech ? "Světlý" : "Light", _ => isCzech ? "Systém" : "System" };
+            SelectedLanguageDisplay = SelectedLanguage switch { "Czech" => isCzech ? "Čeština" : "Czech", "English" => isCzech ? "Angličtina" : "English", _ => isCzech ? "Systém" : "System" };
+            SelectedTemperatureUnitDisplay = SelectedTemperatureUnit switch { "°C" => "°C", "°F" => "°F", _ => isCzech ? "Systém" : "System" };
+            SelectedWindSpeedUnitDisplay = SelectedWindSpeedUnit switch { "km/h" => "km/h", "mph" => "mph", _ => isCzech ? "Systém" : "System" };
+            SelectedTimeFormatDisplay = SelectedTimeFormat switch { TimeFormatSetting.TwentyFourHour => isCzech ? "24-hod" : "24-hour", TimeFormatSetting.TwelveHour => isCzech ? "12-hod" : "12-hour", _ => isCzech ? "Systém" : "System" };
         }
         finally
         {
@@ -274,26 +253,33 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    private void SaveCurrentSettings()
+    private static void UpdateCollection(ObservableCollection<string> collection, string[] newItems)
     {
-        var settings = _settingsService.LoadSettings();
-        settings.Theme = SelectedTheme;
-        settings.Language = SelectedLanguage;
-        settings.TemperatureUnit = SelectedTemperatureUnit;
-        settings.WindSpeedUnit = SelectedWindSpeedUnit;
-        settings.TimeFormat = SelectedTimeFormat;
-        _settingsService.SaveSettings(settings);
+        if (collection.SequenceEqual(newItems)) return;
+        collection.Clear();
+        foreach (var item in newItems)
+        {
+            collection.Add(item);
+        }
     }
 
-    public static void ApplyTheme(string theme)
+    private void SaveCurrentSettings()
     {
-        if (Application.Current is null) return;
+        var theme = SelectedTheme;
+        var lang = SelectedLanguage;
+        var temp = SelectedTemperatureUnit;
+        var wind = SelectedWindSpeedUnit;
+        var time = SelectedTimeFormat;
 
-        Application.Current.RequestedThemeVariant = theme switch
+        System.Threading.Tasks.Task.Run(() =>
         {
-            "Light" => ThemeVariant.Light,
-            "Dark" => ThemeVariant.Dark,
-            _ => ThemeVariant.Default
-        };
+            var settings = _settingsService.LoadSettings();
+            settings.Theme = theme;
+            settings.Language = lang;
+            settings.TemperatureUnit = temp;
+            settings.WindSpeedUnit = wind;
+            settings.TimeFormat = time;
+            _settingsService.SaveSettings(settings);
+        });
     }
 }

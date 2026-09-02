@@ -1,9 +1,11 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using ArmprodWeatherXplat.Helpers;
 using ArmprodWeatherXplat.Models;
 using ArmprodWeatherXplat.Services;
+using Avalonia.Threading;
 
 namespace ArmprodWeatherXplat.ViewModels;
 
@@ -18,6 +20,8 @@ public partial class MainViewModel : ViewModelBase
     private WeatherResponse? _lastWeather;
     private DateTime? _lastFailedRefreshAttempt;
 
+    private CancellationTokenSource? _weatherLoadCts;
+
     public MainViewModel()
     {
         Search.LocationSelected += async (location) =>
@@ -27,13 +31,19 @@ public partial class MainViewModel : ViewModelBase
 
         Settings.LanguageChanged += (language) =>
         {
-            UpdateLocalizedTexts();
-            if (_lastWeather != null) UpdateUI(_lastWeather);
+            Dispatcher.UIThread.Post(() =>
+            {
+                UpdateLocalizedTexts();
+                if (_lastWeather != null) UpdateUI(_lastWeather);
+            }, DispatcherPriority.Background);
         };
 
         Settings.UnitsChanged += () =>
         {
-            if (_lastWeather != null) UpdateUI(_lastWeather);
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_lastWeather != null) UpdateUI(_lastWeather);
+            }, DispatcherPriority.Background);
         };
 
         Favorites.FavoriteSelected += async (location) =>
@@ -70,6 +80,10 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task LoadWeatherForLocationAsync(double lat, double lon, string name, bool forceRefresh = false)
     {
+        _weatherLoadCts?.Cancel();
+        _weatherLoadCts = new CancellationTokenSource();
+        var token = _weatherLoadCts.Token;
+
         IsLoading = true;
         HasError = false;
         ErrorMessage = string.Empty;
@@ -83,13 +97,13 @@ public partial class MainViewModel : ViewModelBase
             CityName = name;
             Favorites.UpdateCurrentLocation(lat, lon, name);
 
-            // Chaching
+            // Caching
             if (!forceRefresh && settings.CityName == name && (DateTime.Now - settings.LastUpdated).TotalMinutes < 15)
             {
                 if (!string.IsNullOrEmpty(settings.RawWeatherJson))
                 {
                     var cachedWeather = System.Text.Json.JsonSerializer.Deserialize<WeatherResponse>(settings.RawWeatherJson);
-                    if (cachedWeather != null)
+                    if (cachedWeather != null && !token.IsCancellationRequested)
                     {
                         IsOffline = false;
                         UpdateLastUpdatedText(settings.LastUpdated);
@@ -101,6 +115,9 @@ public partial class MainViewModel : ViewModelBase
 
             // API CALL
             var weather = await _weatherService.GetWeatherAsync(lat, lon);
+
+            if (token.IsCancellationRequested) return;
+
             if (weather?.Current == null)
             {
                 HandleLoadError("Nepodařilo se získat data z meteo služby.", "Failed to retrieve data from weather service.", settings);
@@ -117,19 +134,34 @@ public partial class MainViewModel : ViewModelBase
             _lastFailedRefreshAttempt = null;
             IsOffline = false;
             UpdateLastUpdatedText(settings.LastUpdated);
+            
+            _lastWeather = weather;
             UpdateUI(weather);
+        }
+        catch (OperationCanceledException)
+        {
+            // The request was cancelled by a more recent click – we’ll ignore it
         }
         catch (System.Net.Http.HttpRequestException)
         {
-            HandleLoadError("Chybí připojení k internetu. Zkontrolujte síť a zkuste to znovu.", "No internet connection. Please check your network and try again.", settings);
+            if (!token.IsCancellationRequested)
+            {
+                HandleLoadError("Chybí připojení k internetu. Zkontrolujte síť a zkuste to znovu.", "No internet connection. Please check your network and try again.", settings);
+            }
         }
         catch (Exception ex)
         {
-            HandleLoadError($"Došlo k chybě: {ex.Message}", $"An error occurred: {ex.Message}", settings);
+            if (!token.IsCancellationRequested)
+            {
+                HandleLoadError($"Došlo k chybě: {ex.Message}", $"An error occurred: {ex.Message}", settings);
+            }
         }
         finally
         {
-            IsLoading = false;
+            if (!token.IsCancellationRequested)
+            {
+                IsLoading = false;
+            }
         }
     }
 

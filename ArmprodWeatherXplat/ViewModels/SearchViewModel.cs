@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArmprodWeatherXplat.Models;
 using ArmprodWeatherXplat.Services;
+using Avalonia.Threading;
 
 namespace ArmprodWeatherXplat.ViewModels;
 
@@ -83,16 +84,18 @@ public partial class SearchViewModel : ViewModelBase
 
     partial void OnSelectedSearchResultChanged(LocationItem? value)
     {
-        if (value != null)
+        if (value == null) return;
+
+        var selected = value;
+
+        Dispatcher.UIThread.Post(() =>
         {
-            var selected = value;
-            
+            SelectedSearchResult = null;
             IsSearchOpen = false;
             SearchResults.Clear();
             SearchQuery = string.Empty;
-            SelectedSearchResult = null;
 
             LocationSelected?.Invoke(selected);
-        }
+        });
     }
 }
