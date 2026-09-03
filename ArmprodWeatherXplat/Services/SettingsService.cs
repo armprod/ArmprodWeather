@@ -19,7 +19,7 @@ public class UserSettings
     public string CityName { get; set; } = "Brno";
     public double Latitude { get; set; } = 49.1951;
     public double Longitude { get; set; } = 16.6077;
-    public string Theme { get; set; } = "Dark";
+    public string Theme { get; set; } = "System";
     public string Language { get; set; } = "System";
     public string TemperatureUnit { get; set; } = "System";
     public string WindSpeedUnit { get; set; } = "System";

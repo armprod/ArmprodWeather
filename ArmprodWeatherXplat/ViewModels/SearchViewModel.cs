@@ -24,7 +24,6 @@ public partial class SearchViewModel : ViewModelBase
 
     public ObservableCollection<LocationItem> SearchResults { get; } = new();
 
-    // Event informate MainViewModel abour selected city
     public event Action<LocationItem>? LocationSelected;
 
     [RelayCommand]
@@ -54,13 +53,15 @@ public partial class SearchViewModel : ViewModelBase
                 await Task.Delay(300, token);
 
                 var settings = _settingsService.LoadSettings();
-                string langCode = _localizationService.GetApiLanguageCode(settings.Language);
+                
+                string effectiveLanguage = _localizationService.GetEffectiveLanguage(settings.Language);
+                string langCode = _localizationService.GetApiLanguageCode(effectiveLanguage);
 
                 var results = await _locationService.SearchLocationsAsync(value, langCode);
 
                 if (token.IsCancellationRequested) return;
 
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                Dispatcher.UIThread.Post(() =>
                 {
                     SearchResults.Clear();
                     if (results != null)
@@ -74,6 +75,7 @@ public partial class SearchViewModel : ViewModelBase
             }
             catch (OperationCanceledException)
             {
+                // Ignore cancel requirements after fast writing
             }
             catch (Exception ex)
             {

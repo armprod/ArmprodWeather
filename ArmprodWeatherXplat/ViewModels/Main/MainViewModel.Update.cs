@@ -29,6 +29,8 @@ public partial class MainViewModel
         AqiHeader = isCzech ? "🍃 Kvalita ovzduší" : "🍃 Air Quality";
         MoonHeader = isCzech ? "🌙 Měsíc" : "🌙 Moon";
 
+        LoadingText = isCzech ? "Načítání..." : "Loading...";
+
         OfflineHeader = isCzech ? "Jste v offline režimu" : "You are offline";
 
         Search.SearchPlaceholder = isCzech ? "Zadejte název města..." : "Enter city name...";

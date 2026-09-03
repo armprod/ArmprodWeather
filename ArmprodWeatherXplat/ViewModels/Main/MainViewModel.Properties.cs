@@ -29,12 +29,13 @@ public partial class MainViewModel
     public FavoritesViewModel Favorites { get; } = new();
 
     // Main/Basic Statuses
-    [ObservableProperty] private string _cityName = "Loading...";
+    [ObservableProperty] private string _cityName = string.Empty;
     [ObservableProperty] private string _currentTemperature = "--";
     [ObservableProperty] private string _weatherCondition = "--";
     [ObservableProperty] private string _weatherIcon = "❓";
     [ObservableProperty] private string _tempRange = "--";
     [ObservableProperty] private string _localTimeText = "--:--";
+    [ObservableProperty] private string _loadingText = string.Empty;
 
     // Application Card Values
     [ObservableProperty] private string _windSpeed = "--";
