@@ -5,20 +5,16 @@ namespace ArmprodWeatherXplat.Helpers;
 
 public static class WeatherMapper
 {
-    // ==========================================
-    // 1. KÓDY POČASÍ A TEXTY (z původního WeatherMapper)
-    // ==========================================
-
     public static string MapCodeToIcon(int code, bool isDay = true) => code switch
     {
-        0 => isDay ? "☀️" : "🌙",
-        1 or 2 => isDay ? "🌤️" : "🌙",
-        3 => "☁️",
-        45 or 48 => "🌫️",
-        51 or 53 or 55 or 61 or 63 or 65 => "🌧️",
-        71 or 73 or 75 => "❄️",
-        95 or 96 or 99 => "🌩️",
-        _ => "🌡️"
+        0 => isDay ? "☀️\uFE0F" : "🌙\uFE0F",
+        1 or 2 => isDay ? "🌤️\uFE0F" : "🌙\uFE0F",
+        3 => "☁️\uFE0F",
+        45 or 48 => "🌫️\uFE0F",
+        51 or 53 or 55 or 61 or 63 or 65 => "🌧️\uFE0F",
+        71 or 73 or 75 => "❄️\uFE0F",
+        95 or 96 or 99 => "🌩️\uFE0F",
+        _ => "🌡️\uFE0F"
     };
 
     public static string MapCodeToCondition(int code, bool isCzech) => code switch
@@ -39,7 +35,7 @@ public static class WeatherMapper
 
     public static string MapWindDirection(int degrees, bool isCzech)
     {
-        string[] arrows = { "⬇️", "↙️", "⬅️", "↖️", "⬆️", "↗️", "➡️", "↘️" };
+        string[] arrows = { "⬇️\uFE0F", "↙️\uFE0F", "⬅️\uFE0F", "↖️\uFE0F", "⬆️\uFE0F", "↗️\uFE0F", "➡️\uFE0F", "↘️\uFE0F" };
         string[] directions = isCzech 
             ? new[] { "S", "SV", "V", "JV", "J", "JZ", "Z", "SZ" }
             : new[] { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
@@ -62,10 +58,6 @@ public static class WeatherMapper
 
     public static string GetUvRiskLevel(double uvIndex, string language) 
         => GetUvRiskLevel(uvIndex, language == "Czech");
-
-    // ==========================================
-    // 2. PREZENTAČNÍ A FORMÁTOVACÍ METODY
-    // ==========================================
 
     public static double ConvertTemp(double celsius, string unit) =>
         unit == "°F" ? (celsius * 1.8 + 32) : celsius;
@@ -121,8 +113,8 @@ public static class WeatherMapper
             return isCzech ? "Nízká zátěž po celý den" : "Low intensity all day";
 
         return isCzech 
-            ? $"Meximum ({maxUv:F1}) kolem {peakTime}" 
-            : $"Peak ({maxUv:F1}) around {peakTime}";
+            ? $"Maximum kolem {peakTime}" 
+            : $"Peak around {peakTime}";
     }
 
     public static string FormatPressureWithTrend(double currentPressure, double? pastPressure, bool isCzech)
@@ -138,18 +130,18 @@ public static class WeatherMapper
         double diff = currentPressure - pastPressure.Value;
 
         if (diff <= -2.0)
-            return isCzech ? "⚠️ Rychlý pokles" : "⚠️ Rapid drop";
+            return isCzech ? "⚠️\uFE0F Rychlý pokles" : "⚠️\uFE0F Rapid drop";
         
         if (diff <= -0.8)
-            return isCzech ? "📉 Mírný pokles" : "📉 Slight drop";
+            return isCzech ? "📉\uFE0F Mírný pokles" : "📉\uFE0F Slight drop";
 
         if (diff >= 2.0)
-            return isCzech ? "📈 Rychlý vzestup" : "📈 Rapid rise";
+            return isCzech ? "📈\uFE0F Rychlý vzestup" : "📈\uFE0F Rapid rise";
 
         if (diff >= 0.8)
-            return isCzech ? "📈 Mírný vzestup" : "📈 Slight rise";
+            return isCzech ? "📈\uFE0F Mírný vzestup" : "📈\uFE0F Slight rise";
 
-        return isCzech ? "➡️ Stabilní" : "➡️ Steady";
+        return isCzech ? "➡️\uFE0F Stabilní" : "➡️\uFE0F Steady";
     }
 
     public static (string Value, string Description) FormatVisibility(double visibilityMeters, string speedOrDistanceUnit, bool isCzech)
@@ -181,11 +173,11 @@ public static class WeatherMapper
         string valueStr = $"{cloudPercent} %";
 
         string desc;
-        if (cloudPercent <= 10) desc = isCzech ? "☀️ Jasno" : "☀️ Clear sky";
-        else if (cloudPercent <= 30) desc = isCzech ? "🌤️ Skoro jasno" : "🌤️ Mostly clear";
-        else if (cloudPercent <= 70) desc = isCzech ? "⛅ Polojasno" : "⛅ Partly cloudy";
-        else if (cloudPercent <= 90) desc = isCzech ? "🌥️ Skoro zataženo" : "🌥️ Mostly cloudy";
-        else desc = isCzech ? "☁️ Zataženo" : "☁️ Overcast";
+        if (cloudPercent <= 10) desc = isCzech ? "☀️\uFE0F Jasno" : "☀️\uFE0F Clear sky";
+        else if (cloudPercent <= 30) desc = isCzech ? "🌤️\uFE0F Skoro jasno" : "🌤️\uFE0F Mostly clear";
+        else if (cloudPercent <= 70) desc = isCzech ? "⛅\uFE0F Polojasno" : "⛅\uFE0F Partly cloudy";
+        else if (cloudPercent <= 90) desc = isCzech ? "🌥️\uFE0F Skoro zataženo" : "🌥️\uFE0F Mostly cloudy";
+        else desc = isCzech ? "☁️\uFE0F Zataženo" : "☁️\uFE0F Overcast";
 
         return (valueStr, desc);
     }
@@ -195,14 +187,14 @@ public static class WeatherMapper
         string name;
         string icon;
 
-        if (moonPhase == 0.0 || moonPhase == 1.0) { icon = "🌑"; name = isCzech ? "Nov" : "New Moon"; }
-        else if (moonPhase < 0.25) { icon = "🌒"; name = isCzech ? "Dorůstající srp" : "Waxing Crescent"; }
-        else if (moonPhase == 0.25) { icon = "🌓"; name = isCzech ? "První čtvrť" : "First Quarter"; }
-        else if (moonPhase < 0.50) { icon = "🌔"; name = isCzech ? "Dorůstající měsíc" : "Waxing Gibbous"; }
-        else if (moonPhase == 0.50) { icon = "🌕"; name = isCzech ? "Úplněk" : "Full Moon"; }
-        else if (moonPhase < 0.75) { icon = "🌖"; name = isCzech ? "Couvající měsíc" : "Waning Gibbous"; }
-        else if (moonPhase == 0.75) { icon = "🌗"; name = isCzech ? "Poslední čtvrť" : "Last Quarter"; }
-        else { icon = "🌘"; name = isCzech ? "Ubývající srp" : "Waning Crescent"; }
+        if (moonPhase == 0.0 || moonPhase == 1.0) { icon = "🌑\uFE0F"; name = isCzech ? "Nov" : "New Moon"; }
+        else if (moonPhase < 0.25) { icon = "🌒\uFE0F"; name = isCzech ? "Dorůstající srp" : "Waxing Crescent"; }
+        else if (moonPhase == 0.25) { icon = "🌓\uFE0F"; name = isCzech ? "První čtvrť" : "First Quarter"; }
+        else if (moonPhase < 0.50) { icon = "🌔\uFE0F"; name = isCzech ? "Dorůstající měsíc" : "Waxing Gibbous"; }
+        else if (moonPhase == 0.50) { icon = "🌕\uFE0F"; name = isCzech ? "Úplněk" : "Full Moon"; }
+        else if (moonPhase < 0.75) { icon = "🌖\uFE0F"; name = isCzech ? "Couvající měsíc" : "Waning Gibbous"; }
+        else if (moonPhase == 0.75) { icon = "🌗\uFE0F"; name = isCzech ? "Poslední čtvrť" : "Last Quarter"; }
+        else { icon = "🌘\uFE0F"; name = isCzech ? "Ubývající srp" : "Waning Crescent"; }
 
         string risesetText = (moonrise != null && moonset != null) 
             ? $"↑ {moonrise}  ↓ {moonset}" 
@@ -216,11 +208,11 @@ public static class WeatherMapper
         string valueStr = $"{aqiValue} AQI";
         string desc;
 
-        if (aqiValue <= 50) desc = isCzech ? "🟢 Skvělá (Čistý vzduch)" : "🟢 Good";
-        else if (aqiValue <= 100) desc = isCzech ? "🟡 Střední (Akceptovatelná)" : "🟡 Moderate";
-        else if (aqiValue <= 150) desc = isCzech ? "🟠 Citlivé skupiny" : "🟠 Unhealthy for Sensitive";
-        else if (aqiValue <= 200) desc = isCzech ? "🔴 Nezdravá" : "🔴 Unhealthy";
-        else desc = isCzech ? "🟣 Velmi špatná" : "🟣 Very Unhealthy";
+        if (aqiValue <= 50) desc = isCzech ? "🟢\uFE0F Skvělá (Čistý vzduch)" : "🟢\uFE0F Good";
+        else if (aqiValue <= 100) desc = isCzech ? "🟡\uFE0F Střední (Akceptovatelná)" : "🟡\uFE0F Moderate";
+        else if (aqiValue <= 150) desc = isCzech ? "🟠\uFE0F Citlivé skupiny" : "🟠\uFE0F Unhealthy for Sensitive";
+        else if (aqiValue <= 200) desc = isCzech ? "🔴\uFE0F Nezdravá" : "🔴\uFE0F Unhealthy";
+        else desc = isCzech ? "🟣\uFE0F Velmi špatná" : "🟣\uFE0F Very Unhealthy";
 
         return (valueStr, desc);
     }

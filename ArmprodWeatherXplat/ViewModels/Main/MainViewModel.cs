@@ -24,6 +24,9 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
+        Search.Initialize(this);
+        Settings.Initialize(this);
+    
         Search.LocationSelected += async (location) =>
         {
             await LoadWeatherForLocationAsync(location.Latitude, location.Longitude, location.Name, forceRefresh: true);

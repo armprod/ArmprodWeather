@@ -16,6 +16,8 @@ public partial class SearchViewModel : ViewModelBase
     private readonly SettingsService _settingsService = new();
     private readonly LocalizationService _localizationService = new();
     private CancellationTokenSource? _searchCts;
+    
+    private MainViewModel? _mainViewModel;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private bool _isSearchOpen = false;
@@ -26,12 +28,40 @@ public partial class SearchViewModel : ViewModelBase
 
     public event Action<LocationItem>? LocationSelected;
 
+    public void Initialize(MainViewModel mainViewModel)
+    {
+        _mainViewModel = mainViewModel;
+    }
+
     [RelayCommand]
     public void ToggleSearch()
     {
         IsSearchOpen = !IsSearchOpen;
+        
         SearchResults.Clear();
         SearchQuery = string.Empty;
+        
+        SelectedSearchResult = null;
+
+        if (IsSearchOpen && _mainViewModel != null)
+        {
+            _mainViewModel.Settings.IsSettingsOpen = false;
+        }
+    }
+
+    partial void OnSelectedSearchResultChanged(LocationItem? value)
+    {
+        if (value == null) return;
+
+        var selected = value;
+
+        IsSearchOpen = false;
+        SearchResults.Clear();
+        SearchQuery = string.Empty;
+
+        SelectedSearchResult = null;
+
+        LocationSelected?.Invoke(selected);
     }
 
     partial void OnSearchQueryChanged(string value)
@@ -61,8 +91,10 @@ public partial class SearchViewModel : ViewModelBase
 
                 if (token.IsCancellationRequested) return;
 
-                Dispatcher.UIThread.Post(() =>
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
+                    if (token.IsCancellationRequested) return;
+
                     SearchResults.Clear();
                     if (results != null)
                     {
@@ -75,29 +107,12 @@ public partial class SearchViewModel : ViewModelBase
             }
             catch (OperationCanceledException)
             {
-                // Ignore cancel requirements after fast writing
+                // Ignore after fast writing
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Search error: {ex.Message}");
             }
         }, token);
-    }
-
-    partial void OnSelectedSearchResultChanged(LocationItem? value)
-    {
-        if (value == null) return;
-
-        var selected = value;
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            SelectedSearchResult = null;
-            IsSearchOpen = false;
-            SearchResults.Clear();
-            SearchQuery = string.Empty;
-
-            LocationSelected?.Invoke(selected);
-        });
     }
 }

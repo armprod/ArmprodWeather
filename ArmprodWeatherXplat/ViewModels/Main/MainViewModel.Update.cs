@@ -65,18 +65,48 @@ public partial class MainViewModel
         if (weather.Hourly?.Time != null)
         {
             var hourlyData = new List<(string Time, string Icon, string Temp, string ApparentTemp, string PrecipProb, bool HasRain)>();
-            int limit = Math.Min(weather.Hourly.Time.Count, 24);
+            
+            DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
 
-            for (int i = 0; i < limit; i++)
+            int startIdx = 0;
+            for (int i = 0; i < weather.Hourly.Time.Count; i++)
+            {
+                if (DateTime.TryParse(weather.Hourly.Time[i], out var t) 
+                    && t.Date == cityNow.Date 
+                    && t.Hour == cityNow.Hour)
+                {
+                    startIdx = i;
+                    break;
+                }
+            }
+
+            int limit = Math.Min(startIdx + 24, weather.Hourly.Time.Count);
+
+            for (int i = startIdx; i < limit; i++)
             {
                 string rawTime = weather.Hourly.Time[i];
                 double temp = weather.Hourly.Temperature?[i] ?? 0;
                 double appTemp = weather.Hourly.ApparentTemperature?[i] ?? 0;
                 int precip = weather.Hourly.PrecipitationProbability?[i] ?? 0;
                 int weatherCode = weather.Hourly.WeatherCode?[i] ?? 0;
-                bool isDay = weather.Hourly.IsDay?[i] == 1;
 
-                string formattedTime = DateTime.TryParse(rawTime, out var dt)
+                bool isParsed = DateTime.TryParse(rawTime, out var dt);
+
+                bool isDay;
+                if (weather.Hourly.IsDay != null && i < weather.Hourly.IsDay.Count)
+                {
+                    isDay = weather.Hourly.IsDay[i] == 1;
+                }
+                else if (isParsed)
+                {
+                    isDay = dt.Hour >= 6 && dt.Hour < 21;
+                }
+                else
+                {
+                    isDay = true;
+                }
+
+                string formattedTime = isParsed
                     ? dt.ToString(WeatherMapper.GetTimeFormat(timeFormat, isCzech, includeMinutes: false), culture)
                     : rawTime;
 
@@ -300,33 +330,46 @@ public partial class MainViewModel
             }
         }
 
-        int maxRainProb = 0;
+        int maxRainProb = -1;
         string maxRainTime = "--:--";
-        double maxUv = 0;
+        double maxUv = -1.0;
         string maxUvTime = "--:--";
 
         int limit = Math.Min(startIdx + 24, weather.Hourly.Time.Count);
 
+        bool is24Hour = Settings.SelectedTimeFormatDisplay?.Contains("24") ?? true;
+        string timeFormat = is24Hour ? "HH:mm" : "h:mm tt";
+
         for (int i = startIdx; i < limit; i++)
         {
+            if (!DateTime.TryParse(weather.Hourly.Time[i], out var dt))
+                continue;
+
+            string formattedTime = dt.ToString(timeFormat);
+
             if (weather.Hourly.PrecipitationProbability != null && weather.Hourly.PrecipitationProbability.Count > i)
             {
-                if (weather.Hourly.PrecipitationProbability[i] > maxRainProb)
+                int rain = weather.Hourly.PrecipitationProbability[i];
+                if (rain > maxRainProb)
                 {
-                    maxRainProb = weather.Hourly.PrecipitationProbability[i];
-                    if (DateTime.TryParse(weather.Hourly.Time[i], out var dt)) maxRainTime = dt.ToString("HH:mm");
+                    maxRainProb = rain;
+                    maxRainTime = formattedTime;
                 }
             }
 
             if (weather.Hourly.UvIndex != null && weather.Hourly.UvIndex.Count > i)
             {
-                if (weather.Hourly.UvIndex[i] > maxUv)
+                double uv = weather.Hourly.UvIndex[i];
+                if (uv > maxUv)
                 {
-                    maxUv = weather.Hourly.UvIndex[i];
-                    if (DateTime.TryParse(weather.Hourly.Time[i], out var dt)) maxUvTime = dt.ToString("HH:mm");
+                    maxUv = uv;
+                    maxUvTime = formattedTime;
                 }
             }
         }
+
+        maxRainProb = Math.Max(0, maxRainProb);
+        maxUv = Math.Max(0.0, maxUv);
 
         HourlyPeakPrecipText = WeatherMapper.FormatPeakPrecip(maxRainProb, maxRainTime, isCzech);
         PeakUvTimeText = WeatherMapper.FormatPeakUv(maxUv, maxUvTime, isCzech);

@@ -17,6 +17,8 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly SettingsService _settingsService = new();
     private readonly LocalizationService _localizationService = new();
 
+    private MainViewModel? _mainViewModel;
+
     private bool _isUpdatingLocalization;
 
     public SettingsViewModel()
@@ -56,6 +58,14 @@ public partial class SettingsViewModel : ViewModelBase
     public event Action<string>? LanguageChanged;
     public event Action? UnitsChanged;
 
+    /// <summary>
+    /// Propojení s MainViewModel pro koordinaci panelů
+    /// </summary>
+    public void Initialize(MainViewModel mainViewModel)
+    {
+        _mainViewModel = mainViewModel;
+    }
+
     public void Initialize(string theme, string language, string tempUnit, string windUnit, TimeFormatSetting timeFormat)
     {
         SelectedTheme = theme;
@@ -73,9 +83,14 @@ public partial class SettingsViewModel : ViewModelBase
     public void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
+
+        if (IsSettingsOpen && _mainViewModel != null)
+        {
+            _mainViewModel.Search.IsSearchOpen = false;
+        }
     }
 
-  partial void OnSelectedThemeDisplayChanged(string value)
+    partial void OnSelectedThemeDisplayChanged(string value)
     {
         if (_isUpdatingLocalization || string.IsNullOrWhiteSpace(value)) return;
 
