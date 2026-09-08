@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using ArmprodWeatherXplat.Helpers;
 using ArmprodWeatherXplat.Models;
 using ArmprodWeatherXplat.Services;
@@ -16,18 +17,18 @@ public partial class MainViewModel
         LocalTimeHeader = isCzech ? "Místní čas" : "Local time";
         HourlyForecastHeader = isCzech ? "Hodinová předpověď" : "Hourly forecast";
         DailyForecastHeader = isCzech ? "7denní předpověď" : "7-day forecast";
-        WindHeader = isCzech ? "💨 Vítr" : "💨 Wind";
-        HumidityHeader = isCzech ? "💧 Vlhkost" : "💧 Humidity";
-        ApparentTempHeader = isCzech ? "🌡️ Pocitová teplota" : "🌡️ Feels like";
-        PressureHeader = isCzech ? "⏲️ Tlak vzduchu" : "⏲️ Pressure";
-        UvIndexHeader = isCzech ? "☀️ Max. UV Index" : "☀️ Max UV Index";
-        PrecipProbHeader = isCzech ? "🌧️ Očekávanost srážek" : "🌧️ Rain chance";
-        SunriseHeader = isCzech ? "🌅 Východ slunce" : "🌅 Sunrise";
-        SunsetHeader = isCzech ? "🌇 Západ slunce" : "🌇 Sunset";
-        VisibilityHeader = isCzech ? "👁️ Viditelnost" : "👁️ Visibility";
-        CloudCoverHeader = isCzech ? "☁️ Oblačnost" : "☁️ Cloud cover";
-        AqiHeader = isCzech ? "🍃 Kvalita ovzduší" : "🍃 Air Quality";
-        MoonHeader = isCzech ? "🌙 Měsíc" : "🌙 Moon";
+        WindHeader = isCzech ? "Vítr" : "Wind";
+        HumidityHeader = isCzech ? "Vlhkost" : "Humidity";
+        ApparentTempHeader = isCzech ? "Pocitová teplota" : "Feels like";
+        PressureHeader = isCzech ? "Tlak vzduchu" : "Pressure";
+        UvIndexHeader = isCzech ? "Max. UV Index" : "Max UV Index";
+        PrecipProbHeader = isCzech ? "Očekávanost srážek" : "Rain chance";
+        SunriseHeader = isCzech ? "Východ slunce" : "Sunrise";
+        SunsetHeader = isCzech ? "Západ slunce" : "Sunset";
+        VisibilityHeader = isCzech ? "Viditelnost" : "Visibility";
+        CloudCoverHeader = isCzech ? "Oblačnost" : "Cloud cover";
+        AqiHeader = isCzech ? "Kvalita ovzduší" : "Air Quality";
+        MoonHeader = isCzech ? "Měsíc" : "Moon";
 
         LoadingText = isCzech ? "Načítání..." : "Loading...";
 
@@ -128,19 +129,24 @@ public partial class MainViewModel
         if (weather.Daily?.Time != null)
         {
             var dailyData = new List<(string Day, string Icon, string TempRange)>();
+
+            DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
+
             for (int i = 0; i < weather.Daily.Time.Count; i++)
             {
                 string rawDate = weather.Daily.Time[i];
-                double max = weather.Daily.TempMax?[i] ?? 0;
-                double min = weather.Daily.TempMin?[i] ?? 0;
+                if (!DateTime.TryParse(rawDate, out var dt)) continue;
+
+                if (dt.Date < cityNow.Date) continue;
+
+                double fallbackMax = weather.Daily.TempMax?[i] ?? 0;
+                double fallbackMin = weather.Daily.TempMin?[i] ?? 0;
                 int weatherCode = weather.Daily.WeatherCode?[i] ?? 0;
 
-                string dayName = "--";
-                if (DateTime.TryParse(rawDate, out var dt))
-                {
-                    dayName = dt.ToString("ddd d.M.", culture);
-                    if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
-                }
+                string dayName = dt.ToString("ddd d.M.", culture);
+                if (isCzech && dayName.Length > 0) dayName = char.ToUpper(dayName[0]) + dayName[1..];
+
+                var (max, min) = GetDayMinMax(weather, dt.Date, fallbackMax, fallbackMin);
 
                 double convertedMax = WeatherMapper.ConvertTemp(max, Settings.SelectedTemperatureUnit);
                 double convertedMin = WeatherMapper.ConvertTemp(min, Settings.SelectedTemperatureUnit);
@@ -151,6 +157,7 @@ public partial class MainViewModel
                     TempRange: $"{Math.Round(convertedMax)}{tempUnit} / {Math.Round(convertedMin)}{tempUnit}"
                 ));
             }
+
             UpdateDailyForecastItems(dailyData);
         }
     }
@@ -179,14 +186,17 @@ public partial class MainViewModel
         double currentTemp = WeatherMapper.ConvertTemp(current.Temperature, Settings.SelectedTemperatureUnit);
         CurrentTemperature = $"{Math.Round(currentTemp)}{tempUnit}";
 
-        if (weather.Daily?.TempMax is { Count: > 0 } && weather.Daily?.TempMin is { Count: > 0 })
-        {
-            string highLabel = isCzech ? "V" : "H";
-            string lowLabel = isCzech ? "N" : "L";
-            double maxTemp = WeatherMapper.ConvertTemp(weather.Daily.TempMax[0], Settings.SelectedTemperatureUnit);
-            double minTemp = WeatherMapper.ConvertTemp(weather.Daily.TempMin[0], Settings.SelectedTemperatureUnit);
-            TempRange = $"{highLabel}: {Math.Round(maxTemp)}{tempUnit}  |  {lowLabel}: {Math.Round(minTemp)}{tempUnit}";
-        }
+        double fallbackMax = weather.Daily?.TempMax is { Count: > 0 } ? weather.Daily.TempMax[0] : current.Temperature;
+        double fallbackMin = weather.Daily?.TempMin is { Count: > 0 } ? weather.Daily.TempMin[0] : current.Temperature;
+
+        var (maxTemp, minTemp) = GetDayMinMax(weather, cityNow.Date, fallbackMax, fallbackMin);
+
+        double convertedMax = WeatherMapper.ConvertTemp(maxTemp, Settings.SelectedTemperatureUnit);
+        double convertedMin = WeatherMapper.ConvertTemp(minTemp, Settings.SelectedTemperatureUnit);
+
+        string highLabel = isCzech ? "V" : "H";
+        string lowLabel = isCzech ? "N" : "L";
+        TempRange = $"{highLabel}: {Math.Round(convertedMax)}{tempUnit}  |  {lowLabel}: {Math.Round(convertedMin)}{tempUnit}";
     }
 
     private void UpdateLastUpdatedText(DateTime lastUpdated)
@@ -437,5 +447,41 @@ public partial class MainViewModel
         }
 
         return null;
+    }
+
+    private (double Max, double Min) GetDayMinMax(WeatherResponse weather, DateTime targetDate, double fallbackMax, double fallbackMin)
+    {
+        double max = fallbackMax;
+        double min = fallbackMin;
+
+        string dateStr = targetDate.ToString("yyyy-MM-dd");
+
+        if (weather.Hourly?.Time != null && weather.Hourly?.Temperature != null)
+        {
+            var dayTemps = weather.Hourly.Time
+                .Select((t, idx) => new 
+                { 
+                    TimeStr = t, 
+                    Temp = weather.Hourly.Temperature.Count > idx ? weather.Hourly.Temperature[idx] : (double?)null 
+                })
+                .Where(x => x.TimeStr != null && x.TimeStr.StartsWith(dateStr) && x.Temp.HasValue)
+                .Select(x => x.Temp!.Value)
+                .ToList();
+
+            if (dayTemps.Count > 0)
+            {
+                max = dayTemps.Max();
+                min = dayTemps.Min();
+            }
+        }
+
+        DateTime cityNow = DateTime.UtcNow.AddSeconds(weather.UtcOffsetSeconds);
+        if (weather.Current != null && targetDate.Date == cityNow.Date)
+        {
+            max = Math.Max(max, weather.Current.Temperature);
+            min = Math.Min(min, weather.Current.Temperature);
+        }
+
+        return (max, min);
     }
 }

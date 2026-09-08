@@ -130,18 +130,14 @@ public static class WeatherMapper
         double diff = currentPressure - pastPressure.Value;
 
         if (diff <= -2.0)
-            return isCzech ? "⚠️\uFE0F Rychlý pokles" : "⚠️\uFE0F Rapid drop";
-        
+            return isCzech ? "Rychlý pokles" : "Rapid drop";
         if (diff <= -0.8)
-            return isCzech ? "📉\uFE0F Mírný pokles" : "📉\uFE0F Slight drop";
-
+            return isCzech ? "Mírný pokles" : "Slight drop";
         if (diff >= 2.0)
-            return isCzech ? "📈\uFE0F Rychlý vzestup" : "📈\uFE0F Rapid rise";
-
+            return isCzech ? "Rychlý vzestup" : "Rapid rise";
         if (diff >= 0.8)
-            return isCzech ? "📈\uFE0F Mírný vzestup" : "📈\uFE0F Slight rise";
-
-        return isCzech ? "➡️\uFE0F Stabilní" : "➡️\uFE0F Steady";
+            return isCzech ? "Mírný vzestup" : "Slight rise";
+        return isCzech ? "Stabilní" : "Steady";
     }
 
     public static (string Value, string Description) FormatVisibility(double visibilityMeters, string speedOrDistanceUnit, bool isCzech)
@@ -173,11 +169,11 @@ public static class WeatherMapper
         string valueStr = $"{cloudPercent} %";
 
         string desc;
-        if (cloudPercent <= 10) desc = isCzech ? "☀️\uFE0F Jasno" : "☀️\uFE0F Clear sky";
-        else if (cloudPercent <= 30) desc = isCzech ? "🌤️\uFE0F Skoro jasno" : "🌤️\uFE0F Mostly clear";
-        else if (cloudPercent <= 70) desc = isCzech ? "⛅\uFE0F Polojasno" : "⛅\uFE0F Partly cloudy";
-        else if (cloudPercent <= 90) desc = isCzech ? "🌥️\uFE0F Skoro zataženo" : "🌥️\uFE0F Mostly cloudy";
-        else desc = isCzech ? "☁️\uFE0F Zataženo" : "☁️\uFE0F Overcast";
+        if (cloudPercent <= 10) desc = isCzech ? "Jasno" : "Clear sky";
+        else if (cloudPercent <= 30) desc = isCzech ? "Skoro jasno" : "Mostly clear";
+        else if (cloudPercent <= 70) desc = isCzech ? "Polojasno" : "Partly cloudy";
+        else if (cloudPercent <= 90) desc = isCzech ? "Skoro zataženo" : "Mostly cloudy";
+        else desc = isCzech ? "Zataženo" : "Overcast";
 
         return (valueStr, desc);
     }

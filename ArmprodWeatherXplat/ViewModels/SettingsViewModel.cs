@@ -58,9 +58,6 @@ public partial class SettingsViewModel : ViewModelBase
     public event Action<string>? LanguageChanged;
     public event Action? UnitsChanged;
 
-    /// <summary>
-    /// Propojení s MainViewModel pro koordinaci panelů
-    /// </summary>
     public void Initialize(MainViewModel mainViewModel)
     {
         _mainViewModel = mainViewModel;
